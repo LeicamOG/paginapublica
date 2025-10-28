@@ -136,7 +136,7 @@
     <div id="status" class="status"><span id="statusIcon" class="ico"><span class="spinner" aria-hidden="true"></span></span><span id="statusText">Preparando requisição…</span></div>
 
     <p class="hint pulse" style="margin-top:20px; font-size:0.9rem; line-height:1.4; text-align:center;">
-      <span class="spinner" style="display:inline-block; vertical-align:middle; margin-right:8px"></span> ⚡ Conversapp está gerando o resumo da sua conversa…
+      <span class="spinner" style="display:inline-block; vertical-align:middle; margin-right:8px"></span> ⚡ Seu resumo está sendo gerado! Você já pode fechar esta janela
     </p>
   </main>
 
@@ -170,7 +170,6 @@
     const statusEl = document.getElementById('status');
     const statusIcon = document.getElementById('statusIcon');
     const statusText = document.getElementById('statusText');
-    const retryBtn = document.getElementById('retry');
 
     function setStatus(text, type){
       statusText.textContent = text;
@@ -194,12 +193,12 @@
         if(RETURN_URL){
           try{ location.replace(RETURN_URL); return; }catch(_){ }
         }
-        try { location.replace('about:blank'); } catch(_){}
+        try { location.replace('about:blank'); } catch(_){ }
       }, ms);
 
       // Notifica o parent (se estiver dentro de iframe) antes de fechar
       setTimeout(() => {
-        try{ parent.postMessage({ type:'conversapp:resumo:done', ok:true, data:payload }, '*'); }catch(_){}
+        try{ parent.postMessage({ type:'conversapp:resumo:done', ok:true, data:payload }, '*'); }catch(_){ }
       }, Math.max(0, ms-200));
     }
 
