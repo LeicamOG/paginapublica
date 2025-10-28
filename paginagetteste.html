@@ -225,17 +225,27 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ewogICJyb2xlIjogImFub24iLAogICJpc3MiOiAic3VwYWJhc2UiLAogICJpYXQiOiAxNzE1MDUwODAwLAogICJleHAiOiAxODcyODE3MjAwCn0._Lg9Cay-21cEQi56tidqiOkBhzjQ6kePgSRbcQfhvO8';
     
     const normalized = {
-      userId: params.get('iddousuario') || params.get('userId') || null,
-      accountId: params.get('idconta') || params.get('accountId') || null,
-      atendimentoId: params.get('idatendimento') || params.get('atendimentoId') || null,
-      contatoId: params.get('idcontato') || params.get('contatoId') || null,
-      cardId: params.get('idcard') || params.get('cardId') || null,
-      telefoneContato: params.get('telefone') || params.get('telefonecontato') || null,
-      emailContato: params.get('email') || params.get('emailcontato') || null,
-      conversationId: params.get('conversationId') || null,
-      channel: params.get('channel') || 'whatsapp',
-      locale: params.get('locale') || 'pt-BR',
-    };
+  // ANTES
+  // userId: params.get('iddousuario') || params.get('userId') || null,
+  // accountId: params.get('idconta') || params.get('accountId') || null,
+  // atendimentoId: params.get('idatendimento') || params.get('atendimentoId') || null,
+  // contatoId: params.get('idcontato') || params.get('contatoId') || null,
+  // cardId: params.get('idcard') || params.get('cardId') || null,
+  // telefoneContato: params.get('telefone') || params.get('telefonecontato') || null,
+  // emailContato: params.get('email') || params.get('emailcontato') || null,
+
+  // DEPOIS (CORRIGIDO)
+  userId: params.get('iddousuario') || null,
+  accountId: params.get('iddaconta') || null,       // <-- MUDOU AQUI
+  atendimentoId: params.get('iddoatendimento') || null, // <-- MUDOU AQUI
+  contatoId: params.get('iddocontato') || null,       // <-- MUDOU AQUI
+  cardId: params.get('iddocard') || null,           // <-- MUDOU AQUI
+  telefoneContato: params.get('telefonedocontato') || null, // <-- MUDOU AQUI
+  emailContato: params.get('emaildocontato') || null,       // <-- MUDOU AQUI
+  conversationId: params.get('conversationId') || null,
+  channel: params.get('channel') || 'whatsapp',
+  locale: params.get('locale') || 'pt-BR',
+};
 
     const payload = {
       source: 'conversapp',
@@ -423,3 +433,4 @@
   </script>
 </body>
 </html>
+
