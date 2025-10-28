@@ -1,4 +1,220 @@
-<script>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gerando resumo… • Conversapp</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@500;700&display=swap');
+
+    :root{
+      --bg:#f3f4f6;
+      --card:#ffffff;
+      --text:#111827;
+      --sub:#6b7280;
+      --brandGreen:#c6f6ae;
+      --brandNavy:#0a1431;
+      --brandBlue:#2563eb;
+      --ok:#16a34a;
+      --err:#ef4444;
+      --shadow:0 10px 30px rgba(0,0,0,.10);
+      --radius:16px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; background:var(--bg); color:var(--text);
+      font-family:'Inter', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      display:grid; place-items:center;
+    }
+    .card{ width:min(92vw,600px); background:var(--card); border-radius:var(--radius);
+           box-shadow:var(--shadow); padding:28px 28px 22px; text-align:center; position:relative; }
+    .title{ font-weight:700; font-size:1.5rem; margin:0 0 14px; letter-spacing:-0.01em }
+    .subtitle{ color:var(--sub); margin:0 0 18px; font-size:0.95rem }
+
+    .mascot-wrap{ display:flex; justify-content:center; align-items:flex-start; min-height:320px; position:relative }
+    .scene{ position:relative; width:440px; max-width:94vw; height:250px; }
+    .mascot-holder{ position:absolute; top:52%; left:50%; transform:translate(-50%,-50%); z-index:1; display:flex; align-items:center; justify-content:center; }
+    .mascot-img{ width:180px; height:auto; display:block }
+    .float{ animation:float 3.6s ease-in-out infinite }
+    @keyframes float{ 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+
+    .chat{ position:absolute; left:50%; top:0; transform:translateX(-50%); width:100%; z-index:3; pointer-events:none }
+    .msg{ max-width:90%; padding:14px 18px; border-radius:18px; box-shadow:0 8px 18px rgba(0,0,0,.10); background:#fff; display:flex; align-items:flex-start; gap:12px; opacity:0; margin:14px auto }
+    .msg.left{ margin-right:auto; flex-direction:row }
+    .msg.right{ margin-left:auto; flex-direction:row-reverse; background:#e6f7ff }
+
+    .avatar{ flex:0 0 34px; width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg,#22d3ee,#2563eb) }
+    .avatar.me{ background:linear-gradient(135deg,#a7f3d0,#34d399) }
+    .lines{ flex:1 }
+    .line{ height:11px; border-radius:8px; background:#e5e7eb; margin:7px 0 }
+    .line.short{ width:60% } .line.mid{ width:80% } .line.long{ width:95% }
+
+    .msg.m1{ animation:bubble 6s ease-in-out infinite both; animation-delay:.0s }
+    .msg.m2{ animation:bubble 6s ease-in-out infinite both; animation-delay:2s }
+    .msg.m3{ animation:bubble 6s ease-in-out infinite both; animation-delay:4s }
+    @keyframes bubble{ 0%{ opacity:0; transform:translateY(8px) scale(.98) }
+                       10%{ opacity:1; transform:translateY(0) scale(1) }
+                       60%{ opacity:1 }
+                       80%{ opacity:0; transform:translateY(-6px) scale(.98) }
+                       100%{ opacity:0 } }
+
+    .typing{ display:flex; gap:6px; align-items:center; margin-top:6px }
+    .dot-ty{ width:6px; height:6px; border-radius:50%; background:#94a3b8; opacity:.6; animation:blink 1.2s infinite }
+    .dot-ty:nth-child(2){ animation-delay:.2s } .dot-ty:nth-child(3){ animation-delay:.4s }
+    @keyframes blink{ 50%{ opacity:.2 } }
+
+    .dots{ display:inline-flex; gap:6px; margin-top:-2px }
+    .dot{ width:6px; height:6px; border-radius:999px; background:#cbd5e1; opacity:.9; animation:b 1.2s infinite }
+    .dot:nth-child(2){ animation-delay:.2s } .dot:nth-child(3){ animation-delay:.4s }
+    @keyframes b{ 50%{ opacity:.25 } }
+    .status{ margin-top:6px; color:var(--sub); font-size:.92rem; display:flex; align-items:center; justify-content:center; gap:8px }
+    .status.ok{ color:var(--ok) } .status.err{ color:var(--err) }
+    .status .ico{ width:18px; height:18px; display:inline-flex; align-items:center; justify-content:center; }
+    .spinner{ width:18px; height:18px; border:3px solid #cbd5e1; border-top-color:var(--brandBlue); border-radius:50%; animation:spin 1s linear infinite; flex-shrink:0 }
+    .watermark{ position:fixed; inset:0; pointer-events:none; opacity:.06;
+      background:radial-gradient(600px 300px at 50% 20%, var(--brandGreen), transparent 60%),
+                 radial-gradient(600px 300px at 80% 80%, var(--brandBlue), transparent 60%); }
+    .hint{ margin-top:12px; color:var(--sub); font-size:0.85rem; text-align:center; }
+    .pulse{ animation:pulse 2s infinite }
+    @keyframes pulse{ 0%,100%{opacity:1} 50%{opacity:.5} }
+    @keyframes spin{ to{ transform:rotate(360deg) } }
+
+    /* --- NOVO CSS PARA O FORMULÁRIO DE TOKEN --- */
+    .token-form-container {
+      display: none; /* Escondido por padrão */
+      text-align: left;
+    }
+    .token-form-container .title {
+      text-align: center;
+    }
+    .token-form-container .subtitle {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-group label {
+      display: block;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+    .form-group input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: border-color 0.2s;
+    }
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--brandBlue);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    .submit-btn {
+      width: 100%;
+      padding: 12px;
+      background-color: var(--brandBlue);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    .submit-btn:hover {
+      background-color: #1d4ed8;
+    }
+    .submit-btn:disabled {
+      background-color: #9ca3af;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <div class="watermark" aria-hidden="true"></div>
+
+  <main class="card" role="dialog" aria-labelledby="t1" aria-describedby="t2">
+    <!-- SEÇÃO DA ANIMAÇÃO (EXISTENTE) -->
+    <div id="loading-section">
+      <h1 id="t1" class="title">Fazendo o seu resumo…</h1>
+      <p id="t2" class="subtitle">Analisando a conversa com IA — isso pode levar alguns segundos.</p>
+
+      <div class="mascot-wrap">
+        <div class="scene">
+          <div class="mascot-holder">
+            <img
+              id="conversappMascot"
+              class="mascot-img float"
+              src="https://leicamog.github.io/paginapublica/logosemfundosvg.svg"
+              alt="Mascote Conversapp lendo conversa"
+              crossorigin="anonymous"
+              referrerpolicy="no-referrer"
+              decoding="async"
+            />
+          </div>
+
+          <div class="chat" aria-label="Mensagens sendo analisadas">
+            <div class="msg m1 left">
+              <div class="avatar"></div>
+              <div class="lines">
+                <div class="line long"></div>
+                <div class="line mid"></div>
+              </div>
+            </div>
+            <div class="msg m2 right">
+              <div class="avatar me"></div>
+              <div class="lines">
+                <div class="line long"></div>
+                <div class="line short"></div>
+              </div>
+            </div>
+            <div class="msg m3 left">
+              <div class="avatar"></div>
+              <div class="lines">
+                <div class="line mid"></div>
+                <div class="typing">
+                  <span class="dot-ty"></span><span class="dot-ty"></span><span class="dot-ty"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="dots" aria-hidden="true"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+    </div>
+
+    <!-- NOVA SEÇÃO DO FORMULÁRIO DE TOKEN -->
+    <div id="token-form-container" class="token-form-container">
+      <h1 class="title">Token da OpenAI necessário</h1>
+      <p class="subtitle">Para gerar o resumo, precisamos da sua chave de API da OpenAI. Ela será salva de forma segura para uso futuro.</p>
+      
+      <form id="token-form">
+        <div class="form-group">
+          <label for="openai-token">Sua Chave de API (sk-...)</label>
+          <input type="password" id="openai-token" placeholder="sk-proj-..." required>
+        </div>
+        <button type="submit" id="save-token-btn" class="submit-btn">Salvar Token e Gerar Resumo</button>
+      </form>
+      <p class="hint">
+        <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer">Onde encontro minha chave?</a>
+      </p>
+    </div>
+
+    <div id="status" class="status"><span id="statusIcon" class="ico"><span class="spinner" aria-hidden="true"></span></span><span id="statusText">Preparando requisição…</span></div>
+
+    <p class="hint pulse" id="hint" style="margin-top:20px; font-size:0.9rem; line-height:1.4; text-align:center;">
+      <span id="hintIcon" class="spinner" style="display:inline-block; vertical-align:middle; margin-right:8px"></span>
+      <span id="hintText">⚡ Seu resumo está sendo gerado! Você já pode fechar esta janela</span>
+    </p>
+  </main>
+
+  <script>
     const params = new URLSearchParams(location.search);
     const TEST_MODE = params.get('test');
     const DEFAULT_WEBHOOK = 'https://ssn8n.conversapp.com.br/webhook-test/b60d2479-e3d3-4116-8d1b-51c77220bbdc';
@@ -77,7 +293,6 @@
 
     async function checkToken(accountId) {
       if (!accountId) return null;
-      // Corrigido o nome da tabela para "Tokens OpenAI - Conversapp"
       const url = `${SUPABASE_URL}/rest/v1/Tokens%20OpenAI%20-%20Conversapp?account_id=eq.${accountId}&select=openai_token`;
       const res = await fetch(url, {
         headers: {
@@ -91,7 +306,6 @@
     }
 
     async function saveToken(accountId, token) {
-      // Corrigido o nome da tabela para "Tokens OpenAI - Conversapp"
       const url = `${SUPABASE_URL}/rest/v1/Tokens%20OpenAI%20-%20Conversapp`;
       const res = await fetch(url, {
         method: 'POST',
@@ -207,3 +421,5 @@
     main();
 
   </script>
+</body>
+</html>
