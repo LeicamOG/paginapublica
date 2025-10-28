@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gerando resumo… • Conversapp</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@500;700&display=swap');
+
+    :root{
+      --bg:#f3f4f6;
+      --card:#ffffff;
+      --text:#111827;
+      --sub:#6b7280;
+      --brandGreen:#c6f6ae;
+      --brandNavy:#0a1431;
+      --brandBlue:#2563eb;
+      --ok:#16a34a;
+      --err:#ef4444;
+      --shadow:0 10px 30px rgba(0,0,0,.10);
+      --radius:16px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; background:var(--bg); color:var(--text);
+      font-family:'Inter', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      display:grid; place-items:center;
+    }
+    .card{ width:min(92vw,600px); background:var(--card); border-radius:var(--radius);
+           box-shadow:var(--shadow); padding:28px 28px 22px; text-align:center; position:relative; }
+    .title{ font-weight:700; font-size:1.5rem; margin:0 0 14px; letter-spacing:-0.01em }
+    .subtitle{ color:var(--sub); margin:0 0 18px; font-size:0.95rem }
+
+    .mascot-wrap{ display:flex; justify-content:center; align-items:flex-start; min-height:320px; position:relative }
+    .scene{ position:relative; width:440px; max-width:94vw; height:250px; }
+    .mascot-holder{ position:absolute; top:52%;  left:50%; transform:translate(-50%,-50%); z-index:1; display:flex; align-items:center; justify-content:center; }
+    .mascot-img{ width:180px; height:auto; display:block }
+    .float{ animation:float 3.6s ease-in-out infinite }
+    @keyframes float{ 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+
+    .chat{ position:absolute; left:50%; top:0; transform:translateX(-50%); width:100%; z-index:3; pointer-events:none }
+    .msg{ max-width:90%; padding:14px 18px; border-radius:18px; box-shadow:0 8px 18px rgba(0,0,0,.10); background:#fff; display:flex; align-items:flex-start; gap:12px; opacity:0; margin:14px auto }
+    .msg.left{ margin-right:auto; flex-direction:row }
+    .msg.right{ margin-left:auto; flex-direction:row-reverse; background:#e6f7ff }
+
+    .avatar{ flex:0 0 34px; width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg,#22d3ee,#2563eb) }
+    .avatar.me{ background:linear-gradient(135deg,#a7f3d0,#34d399) }
+    .lines{ flex:1 }
+    .line{ height:11px; border-radius:8px; background:#e5e7eb; margin:7px 0 }
+    .line.short{ width:60% } .line.mid{ width:80% } .line.long{ width:95% }
+
+    .msg.m1{ animation:bubble 6s ease-in-out infinite both; animation-delay:.0s }
+    .msg.m2{ animation:bubble 6s ease-in-out infinite both; animation-delay:2s }
+    .msg.m3{ animation:bubble 6s ease-in-out infinite both; animation-delay:4s }
+    @keyframes bubble{ 0%{ opacity:0; transform:translateY(8px) scale(.98) }
+                       10%{ opacity:1; transform:translateY(0) scale(1) }
+                       60%{ opacity:1 }
+                       80%{ opacity:0; transform:translateY(-6px) scale(.98) }
+                       100%{ opacity:0 } }
+
+    .typing{ display:flex; gap:6px; align-items:center; margin-top:6px }
+    .dot-ty{ width:6px; height:6px; border-radius:50%; background:#94a3b8; opacity:.6; animation:blink 1.2s infinite }
+    .dot-ty:nth-child(2){ animation-delay:.2s } .dot-ty:nth-child(3){ animation-delay:.4s }
+    @keyframes blink{ 50%{ opacity:.2 } }
+
+    .dots{ display:inline-flex; gap:6px; margin-top:-2px }
+    .dot{ width:6px; height:6px; border-radius:999px; background:#cbd5e1; opacity:.9; animation:b 1.2s infinite }
+    .dot:nth-child(2){ animation-delay:.2s } .dot:nth-child(3){ animation-delay:.4s }
+    @keyframes b{ 50%{ opacity:.25 } }
+    .status{ margin-top:6px; color:var(--sub); font-size:.92rem }
+    .status.ok{ color:var(--ok) } .status.err{ color:var(--err) }
+    .btn{ display:inline-flex; align-items:center; gap:8px; border:0; cursor:pointer; border-radius:999px;
+          padding:10px 16px; font-weight:600; box-shadow:var(--shadow); background:var(--brandBlue); color:#fff }
+    .btn.secondary{ background:#e5e7eb; color:#111827 }
+    .actions{ margin-top:8px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap }
+    .watermark{ position:fixed; inset:0; pointer-events:none; opacity:.06;
+      background:radial-gradient(600px 300px at 50% 20%, var(--brandGreen), transparent 60%),
+                 radial-gradient(600px 300px at 80% 80%, var(--brandBlue), transparent 60%); }
+    .hint{ margin-top:8px; color:var(--sub); font-size:.82rem }
+    code.k{ background:#eef2ff; padding:2px 6px; border-radius:6px }
+  </style>
+</head>
+<body>
+  <div class="watermark" aria-hidden="true"></div>
+
+  <main class="card" role="dialog" aria-labelledby="t1" aria-describedby="t2">
+    <h1 id="t1" class="title">Fazendo o seu resumo…</h1>
+    <p id="t2" class="subtitle">Analisando a conversa com IA — isso pode levar alguns segundos.</p>
+
+    <div class="mascot-wrap">
+      <div class="scene">
+        <div class="mascot-holder">
+        <img
+          id="conversappMascot"
+          class="mascot-img float"
+          src="https://leicamog.github.io/paginapublica/logosemfundosvg.svg"
+          alt="Mascote Conversapp lendo conversa"
+          crossorigin="anonymous"
+          referrerpolicy="no-referrer"
+          decoding="async"
+        />
+        <svg id="mascotFallback" width="160" height="160" viewBox="0 0 120 120" aria-hidden="true" class="float" style="display:none">
+          <path d="M60 18c-23 0-42 17-42 38 0 11 5 21 14 28l-3 12c-.5 2 1.5 3.7 3.4 2.8l14.6-6.7c4.2 1.3 8.7 1.9 13.3 1.9 23 0 42-17 42-38 0-3.7-.6-7.3-1.8-10.7l-18.5 10.7L96 32.5C89.5 23 75.9 18 60 18z" fill="var(--brandGreen)"/>
+          <path d="M60 56 L97 35 A42 42 0 1 1 60 56z" fill="var(--brandGreen)"/>
+          <circle cx="79" cy="52" r="6" fill="var(--brandNavy)"/>
+          <circle cx="48" cy="42" r="14" fill="var(--brandNavy)"/>
+          <rect x="46" y="17" width="4" height="18" rx="2" fill="var(--brandNavy)"/>
+          <circle cx="48" cy="14" r="6" fill="var(--brandNavy)"/>
+        </svg>
+        </div>
+
+        <div class="chat" aria-label="Mensagens sendo analisadas">
+          <div class="msg m1 left">
+            <div class="avatar"></div>
+            <div class="lines">
+              <div class="line long"></div>
+              <div class="line mid"></div>
+            </div>
+          </div>
+          <div class="msg m2 right">
+            <div class="avatar me"></div>
+            <div class="lines">
+              <div class="line long"></div>
+              <div class="line short"></div>
+            </div>
+          </div>
+          <div class="msg m3 left">
+            <div class="avatar"></div>
+            <div class="lines">
+              <div class="line mid"></div>
+              <div class="typing">
+                <span class="dot-ty"></span><span class="dot-ty"></span><span class="dot-ty"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dots" aria-hidden="true"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+
+    <div id="status" class="status">Preparando requisição…</div>
+
+    <div class="actions">
+      <button id="retry" class="btn" style="display:none">Tentar novamente</button>
+      <button id="closeBtn" class="btn secondary" style="display:none">Fechar</button>
+    </div>
+
+    <p class="hint">Esta página (<code class="k">/resumodeconversa.html</code>) já está configurada para enviar ao webhook padrão do Conversapp. Para testes, você pode usar <code class="k">?test=success</code>, <code class="k">?test=fail</code>, <code class="k">?test=cors</code> ou sobrescrever o endpoint com <code class="k">?webhook=https://seu-n8n/...</code>.</p>
+  </main>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const TEST_MODE = params.get('test');
+    const DEFAULT_WEBHOOK = 'https://ssn8n.conversapp.com.br/webhook-test/b60d2479-e3d3-4116-8d1b-51c77220bbdc';
+    const N8N_WEBHOOK_URL = params.get('webhook') || DEFAULT_WEBHOOK;
+
+    // Normaliza campos vindos do Conversapp via querystring
+    const normalized = {
+      userId: params.get('iddousuario') || params.get('userId') || null,
+      accountId: params.get('idconta') || params.get('accountId') || params.get('id_da_conta') || null,
+      atendimentoId: params.get('idatendimento') || params.get('atendimentoId') || null,
+      contatoId: params.get('idcontato') || params.get('contatoId') || null,
+      cardId: params.get('idcard') || params.get('cardId') || null,
+      telefoneContato: params.get('telefone') || params.get('telefonecontato') || params.get('phone') || null,
+      emailContato: params.get('email') || params.get('emailcontato') || null,
+      conversationId: params.get('conversationId') || null,
+      channel: params.get('channel') || 'whatsapp',
+      locale: params.get('locale') || 'pt-BR',
+    };
+
+    const payload = {
+      source: 'conversapp',
+      event: 'gerar_resumo',
+      userId: normalized.userId,
+      accountId: normalized.accountId,
+      atendimentoId: normalized.atendimentoId,
+      contatoId: normalized.contatoId,
+      cardId: normalized.cardId,
+      telefoneContato: normalized.telefoneContato,
+      emailContato: normalized.emailContato,
+      conversationId: normalized.conversationId,
+      channel: normalized.channel,
+      locale: normalized.locale,
+      // Enviamos também todos os parâmetros crus para auditoria/debug
+      metadata: Object.fromEntries([...params.entries()])
+    };
+
+    const statusEl = document.getElementById('status');
+    const retryBtn = document.getElementById('retry');
+    const closeBtn = document.getElementById('closeBtn');
+
+    function setStatus(text, cls){
+      statusEl.textContent = text;
+      statusEl.className = 'status' + (cls ? ' ' + cls : '');
+    }
+    function autoClose(ms){
+      try{ setTimeout(() => window.close(), ms); }catch(_){/* noop */}
+      try{ setTimeout(() => parent.postMessage({ type:'conversapp:resumo:done', ok:true, data:payload }, '*'), Math.max(0, ms-200)); }catch(_){/* noop */}
+      setTimeout(() => { closeBtn.style.display = 'inline-flex'; }, Math.max(0, ms));
+    }{ setTimeout(() => { try{ window.close(); }catch(_){} }, ms);
+      setTimeout(() => { try{ parent.postMessage({ type:'conversapp:resumo:done', ok:true, data:payload }, '*'); }catch(_){} }, Math.max(0, ms-200));
+      setTimeout(() => { closeBtn.style.display = 'inline-flex'; }, Math.max(0, ms)); }catch(_){} }, ms);
+      setTimeout(() => { try{ parent.postMessage({ type:'conversapp:resumo:done', ok:true, data:payload }, '*'); }catch(_){} }, Math.max(0, ms-200));
+      setTimeout(() => { closeBtn.style.display = 'inline-flex'; }, Math.max(0, ms)); }
+
+    retryBtn.addEventListener('click', sendWebhook);
+    closeBtn.addEventListener('click', () => window.close());
+
+    async function runTestCases(){
+      switch(TEST_MODE){
+        case 'success':
+          setStatus('Resumo enviado com sucesso! Esta página se fechará em 3 segundos.', 'ok');
+          await new Promise(r=>setTimeout(r, 300));
+          autoClose(3000);
+          return true;
+        case 'fail':
+          setStatus('Simulando falha (HTTP 500)…', 'err');
+          retryBtn.style.display = 'inline-flex';
+          closeBtn.style.display = 'inline-flex';
+          return true;
+        case 'cors':
+          setStatus('Simulando bloqueio CORS/sem rede…', 'err');
+          retryBtn.style.display = 'inline-flex';
+          closeBtn.style.display = 'inline-flex';
+          return true;
+        case 'delay':
+          setStatus('Simulando servidor lento (10s)…');
+          await new Promise(r=>setTimeout(r, 10000));
+          setStatus('Resumo sendo processado. Você já pode fechar esta janela.', 'ok');
+          autoClose(1200);
+          return true;
+        default:
+          return false;
+      }
+    }
+
+    async function sendWebhook(){
+      retryBtn.style.display = 'none';
+      setStatus('Enviando dados para a IA…');
+
+      if(!N8N_WEBHOOK_URL){
+        setStatus('Nenhum webhook informado. Passe ?webhook=https://seu-n8n/webhook/... ou use ?test=success para homologar.', 'err');
+        retryBtn.style.display = 'inline-flex';
+        closeBtn.style.display = 'inline-flex';
+        return;
+      }
+
+      try{
+        const res = await fetch(N8N_WEBHOOK_URL, {
+          method:'POST',
+          headers:{ 'Content-Type':'application/json' },
+          mode:'cors',
+          body: JSON.stringify(payload)
+        });
+        if(res.ok){
+          setStatus('Resumo enviado com sucesso! Esta página se fechará em 3 segundos.', 'ok');
+          autoClose(3000);
+        }else{
+          const msg = await safeText(res);
+          console.warn('Webhook não-2xx', res.status, msg);
+          setStatus('Falha ao enviar (HTTP '+res.status+'). Verifique o endpoint ou CORS. Tente novamente.', 'err');
+          retryBtn.style.display = 'inline-flex';
+          closeBtn.style.display = 'inline-flex';
+        }
+      }catch(e){
+        console.error(e);
+        setStatus('Falha na rede/CORS bloqueado (Failed to fetch). Confirme que o n8n permite esta origem. Tente novamente.', 'err');
+        retryBtn.style.display = 'inline-flex';
+        closeBtn.style.display = 'inline-flex';
+      }
+    }
+
+    async function safeText(res){ try{ return await res.text(); }catch{ return ''; } }
+
+    (async () => {
+      const img = document.getElementById('conversappMascot');
+      const fb = document.getElementById('mascotFallback');
+      if(img){
+        img.addEventListener('error', () => {
+          fb.style.display = 'block';
+          img.remove();
+        }, { once:true });
+      }
+
+      const tested = await runTestCases();
+      if(tested) return;
+      setStatus('Preparando requisição…');
+      sendWebhook();
+      setTimeout(() => { closeBtn.style.display='inline-flex'; retryBtn.style.display='inline-flex'; }, 25000);
+    })();
+  </script>
+</body>
+</html>
