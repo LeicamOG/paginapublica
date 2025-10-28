@@ -73,17 +73,12 @@
     .status .ico{ width:18px; height:18px; display:inline-flex; align-items:center; justify-content:center; }
     .spinner{ width:18px; height:18px; border:3px solid #cbd5e1; border-top-color:var(--brandBlue); border-radius:50%; animation:spin 1s linear infinite; flex-shrink:0 }
     .status.ok{ color:var(--ok) } .status.err{ color:var(--err) }
-    .btn{ display:inline-flex; align-items:center; gap:8px; border:0; cursor:pointer; border-radius:999px;
-          padding:10px 16px; font-weight:600; box-shadow:var(--shadow); background:var(--brandBlue); color:#fff }
-    .btn.secondary{ background:#e5e7eb; color:#111827 }
-    .actions{ margin-top:8px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap }
     .watermark{ position:fixed; inset:0; pointer-events:none; opacity:.06;
       background:radial-gradient(600px 300px at 50% 20%, var(--brandGreen), transparent 60%),
                  radial-gradient(600px 300px at 80% 80%, var(--brandBlue), transparent 60%); }
-    .hint{ margin-top:12px; color:var(--sub); font-size:.85rem; display:flex; align-items:center; justify-content:center; gap:8px }
+    .hint{ margin-top:12px; color:var(--sub); font-size:0.85rem; text-align:center; }
     .pulse{ animation:pulse 2s infinite }
     @keyframes pulse{ 0%,100%{opacity:1} 50%{opacity:.5} }
-    .spinner{ width:18px; height:18px; border:3px solid #cbd5e1; border-top-color:var(--brandBlue); border-radius:50%; animation:spin 1s linear infinite; flex-shrink:0 }
     @keyframes spin{ to{ transform:rotate(360deg) } }
   </style>
 </head>
@@ -140,14 +135,9 @@
 
     <div id="status" class="status"><span id="statusIcon" class="ico"><span class="spinner" aria-hidden="true"></span></span><span id="statusText">Preparando requisição…</span></div>
 
-    <div class="actions">
-      <button id="retry" class="btn" style="display:none">Tentar novamente</button>
-      <button id="closeBtn" class="btn secondary" style="display:none">Fechar</button>
-    </div>
-
     <p class="hint pulse" style="margin-top:20px; font-size:0.9rem; line-height:1.4; text-align:center;">
-  <span class="spinner" style="display:inline-block; vertical-align:middle; margin-right:8px"></span> ⚡ Conversapp está gerando o resumo da sua conversa…
-</p>
+      <span class="spinner" style="display:inline-block; vertical-align:middle; margin-right:8px"></span> ⚡ Conversapp está gerando o resumo da sua conversa…
+    </p>
   </main>
 
   <script>
@@ -155,6 +145,7 @@
     const TEST_MODE = params.get('test');
     const DEFAULT_WEBHOOK = 'https://ssn8n.conversapp.com.br/webhook-test/b60d2479-e3d3-4116-8d1b-51c77220bbdc';
     const N8N_WEBHOOK_URL = params.get('webhook') || DEFAULT_WEBHOOK;
+    const RETURN_URL = params.get('return') || params.get('redirect') || params.get('close_to') || null;
 
     const normalized = {
       userId: params.get('iddousuario') || params.get('userId') || null,
@@ -180,7 +171,6 @@
     const statusIcon = document.getElementById('statusIcon');
     const statusText = document.getElementById('statusText');
     const retryBtn = document.getElementById('retry');
-    const closeBtn = document.getElementById('closeBtn');
 
     function setStatus(text, type){
       statusText.textContent = text;
@@ -198,13 +188,20 @@
     }
 
     function autoClose(ms){
-      setTimeout(() => { try { window.close(); } catch(_){} }, ms);
-      setTimeout(() => { try { parent.postMessage({ type:'conversapp:resumo:done', ok:true, data:payload }, '*'); } catch(_){} }, Math.max(0, ms-200));
-      setTimeout(() => { closeBtn.style.display = 'inline-flex'; }, Math.max(0, ms));
-    }
+      setTimeout(() => {
+        try { window.close(); } catch(_){}
+        try { window.open('', '_self').close(); } catch(_){}
+        if(RETURN_URL){
+          try{ location.replace(RETURN_URL); return; }catch(_){ }
+        }
+        try { location.replace('about:blank'); } catch(_){}
+      }, ms);
 
-    retryBtn.addEventListener('click', sendWebhook);
-    closeBtn.addEventListener('click', () => window.close());
+      // Notifica o parent (se estiver dentro de iframe) antes de fechar
+      setTimeout(() => {
+        try{ parent.postMessage({ type:'conversapp:resumo:done', ok:true, data:payload }, '*'); }catch(_){}
+      }, Math.max(0, ms-200));
+    }
 
     async function runTestCases(){
       switch(TEST_MODE){
@@ -215,18 +212,12 @@
           return true;
         case 'fail':
           setStatus('Simulando falha (HTTP 500)…', 'err');
-          retryBtn.style.display = 'inline-flex';
-          closeBtn.style.display = 'inline-flex';
           return true;
         case 'badrequest':
           setStatus('Falha ao enviar (HTTP 400 simulado). Verifique os parâmetros.', 'err');
-          retryBtn.style.display = 'inline-flex';
-          closeBtn.style.display = 'inline-flex';
           return true;
         case 'cors':
           setStatus('Simulando bloqueio CORS/sem rede…', 'err');
-          retryBtn.style.display = 'inline-flex';
-          closeBtn.style.display = 'inline-flex';
           return true;
         case 'delay':
           setStatus('Simulando servidor lento (10s)…');
@@ -240,13 +231,10 @@
     }
 
     async function sendWebhook(){
-      retryBtn.style.display = 'none';
       setStatus('Enviando dados para a IA…', 'loading');
 
       if(!N8N_WEBHOOK_URL){
         setStatus('Nenhum webhook informado. Configure o endpoint.', 'err');
-        retryBtn.style.display = 'inline-flex';
-        closeBtn.style.display = 'inline-flex';
         return;
       }
 
@@ -264,14 +252,10 @@
           const msg = await res.text();
           console.warn('Webhook não-2xx', res.status, msg);
           setStatus('Falha ao enviar (HTTP '+res.status+')'+(msg?': '+msg.slice(0,120):'')+'. Tente novamente.', 'err');
-          retryBtn.style.display = 'inline-flex';
-          closeBtn.style.display = 'inline-flex';
         }
       }catch(err){
         console.error('Erro no envio', err);
         setStatus('Erro de rede/CORS ao enviar: '+(err?.message||'Failed to fetch')+'. Verifique a conexão.', 'err');
-        retryBtn.style.display = 'inline-flex';
-        closeBtn.style.display = 'inline-flex';
       }
     }
 
