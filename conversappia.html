@@ -1,0 +1,106 @@
+<script>
+    // --- CONFIGURAÇÃO ---
+    const WEBHOOK_URL = 'https://swebhooks.conversapp.com.br/webhook/39e3119f-396d-4faa-a72a-9bd998267d51';
+    // ---------------------
+
+    const messagesContainer = document.getElementById('messages');
+    const messageInput = document.getElementById('messageInput');
+    const sendButton = document.getElementById('sendButton');
+    const typingIndicator = document.getElementById('typingIndicator');
+
+    // Pega os dados da URL (iddaconta, iddoatendimento)
+    const urlParams = new URLSearchParams(window.location.search);
+    const USER_DATA = {
+        iddaconta: urlParams.get('iddaconta'),
+        iddoatendimento: urlParams.get('iddoatendimento')
+    };
+
+    // VERIFICAÇÃO DE ERRO COM MODO DEBUG
+    if (!USER_DATA.iddaconta || !USER_DATA.iddoatendimento) {
+        // Mostra a URL recebida para depuração
+        document.body.innerHTML = `
+            <h1>Erro de Configuração (Modo Debug)</h1>
+            <p>A janela foi aberta, mas faltam informações da conversa na URL.</p>
+            <h3>URL Recebida:</h3>
+            <p style="word-break: break-all; background: #f0f0f0; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">${window.location.href}</p>
+            <h3>Dados Encontrados:</h3>
+            <ul>
+                <li><b>iddaconta:</b> ${USER_DATA.iddaconta || '(não encontrado)'}</li>
+                <li><b>iddoatendimento:</b> ${USER_DATA.iddoatendimento || '(não encontrado)'}</li>
+            </ul>
+            <p><b>Ação necessária:</b> Verifique a configuração do botão no Conversapp. A URL deve ser parecida com: <br><code>https://.../chat.html?iddaconta=VALOR&iddoatendimento=VALOR</code></p>
+        `;
+        throw new Error("Parâmetros da URL ausentes.");
+    }
+
+    function addMessage(text, sender) {
+        const messageElement = document.createElement('div');
+        messageElement.classList.add('message', sender);
+        messageElement.textContent = text;
+        messagesContainer.appendChild(messageElement);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    function showTypingIndicator() {
+        typingIndicator.style.display = 'flex';
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    function hideTypingIndicator() {
+        typingIndicator.style.display = 'none';
+    }
+
+    async function sendMessage() {
+        const messageText = messageInput.value.trim();
+        if (!messageText) return;
+
+        messageInput.disabled = true;
+        sendButton.disabled = true;
+        sendButton.textContent = 'Enviando...';
+
+        addMessage(messageText, 'user');
+        messageInput.value = '';
+
+        try {
+            showTypingIndicator();
+
+            const params = new URLSearchParams({
+                ...USER_DATA,
+                userMessage: messageText
+            });
+
+            const response = await fetch(`${WEBHOOK_URL}?${params}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            const data = await response.json();
+            hideTypingIndicator();
+
+            if (data.status === 'success') {
+                addMessage(data.response, 'ai');
+            } else {
+                addMessage(data.message || 'Ocorreu um erro desconhecido.', 'error');
+            }
+
+        } catch (error) {
+            console.error('Erro ao chamar o webhook:', error);
+            hideTypingIndicator();
+            addMessage('Falha ao conectar com o assistente. Tente novamente.', 'error');
+        } finally {
+            messageInput.disabled = false;
+            sendButton.disabled = false;
+            sendButton.textContent = 'Enviar';
+            messageInput.focus();
+        }
+    }
+
+    sendButton.addEventListener('click', sendMessage);
+    messageInput.addEventListener('keypress', (event) => {
+        if (event.key === 'Enter') {
+            sendMessage();
+        }
+    });
+
+    addMessage('Olá! Analisei esta conversa. Como posso te ajudar?', 'ai');
+</script>
