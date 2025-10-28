@@ -34,7 +34,7 @@
 
     .mascot-wrap{ display:flex; justify-content:center; align-items:flex-start; min-height:320px; position:relative }
     .scene{ position:relative; width:440px; max-width:94vw; height:250px; }
-    .mascot-holder{ position:absolute; top:52%;  left:50%; transform:translate(-50%,-50%); z-index:1; display:flex; align-items:center; justify-content:center; }
+    .mascot-holder{ position:absolute; top:52%; left:50%; transform:translate(-50%,-50%); z-index:1; display:flex; align-items:center; justify-content:center; }
     .mascot-img{ width:180px; height:auto; display:block }
     .float{ animation:float 3.6s ease-in-out infinite }
     @keyframes float{ 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
@@ -77,8 +77,11 @@
     .watermark{ position:fixed; inset:0; pointer-events:none; opacity:.06;
       background:radial-gradient(600px 300px at 50% 20%, var(--brandGreen), transparent 60%),
                  radial-gradient(600px 300px at 80% 80%, var(--brandBlue), transparent 60%); }
-    .hint{ margin-top:8px; color:var(--sub); font-size:.82rem }
-    code.k{ background:#eef2ff; padding:2px 6px; border-radius:6px }
+    .hint{ margin-top:12px; color:var(--sub); font-size:.85rem; display:flex; align-items:center; justify-content:center; gap:8px }
+    .pulse{ animation:pulse 2s infinite }
+    @keyframes pulse{ 0%,100%{opacity:1} 50%{opacity:.5} }
+    .spinner{ width:18px; height:18px; border:3px solid #cbd5e1; border-top-color:var(--brandBlue); border-radius:50%; animation:spin 1s linear infinite; flex-shrink:0 }
+    @keyframes spin{ to{ transform:rotate(360deg) } }
   </style>
 </head>
 <body>
@@ -91,23 +94,15 @@
     <div class="mascot-wrap">
       <div class="scene">
         <div class="mascot-holder">
-        <img
-          id="conversappMascot"
-          class="mascot-img float"
-          src="https://leicamog.github.io/paginapublica/logosemfundosvg.svg"
-          alt="Mascote Conversapp lendo conversa"
-          crossorigin="anonymous"
-          referrerpolicy="no-referrer"
-          decoding="async"
-        />
-        <svg id="mascotFallback" width="160" height="160" viewBox="0 0 120 120" aria-hidden="true" class="float" style="display:none">
-          <path d="M60 18c-23 0-42 17-42 38 0 11 5 21 14 28l-3 12c-.5 2 1.5 3.7 3.4 2.8l14.6-6.7c4.2 1.3 8.7 1.9 13.3 1.9 23 0 42-17 42-38 0-3.7-.6-7.3-1.8-10.7l-18.5 10.7L96 32.5C89.5 23 75.9 18 60 18z" fill="var(--brandGreen)"/>
-          <path d="M60 56 L97 35 A42 42 0 1 1 60 56z" fill="var(--brandGreen)"/>
-          <circle cx="79" cy="52" r="6" fill="var(--brandNavy)"/>
-          <circle cx="48" cy="42" r="14" fill="var(--brandNavy)"/>
-          <rect x="46" y="17" width="4" height="18" rx="2" fill="var(--brandNavy)"/>
-          <circle cx="48" cy="14" r="6" fill="var(--brandNavy)"/>
-        </svg>
+          <img
+            id="conversappMascot"
+            class="mascot-img float"
+            src="https://leicamog.github.io/paginapublica/logosemfundosvg.svg"
+            alt="Mascote Conversapp lendo conversa"
+            crossorigin="anonymous"
+            referrerpolicy="no-referrer"
+            decoding="async"
+          />
         </div>
 
         <div class="chat" aria-label="Mensagens sendo analisadas">
@@ -147,7 +142,9 @@
       <button id="closeBtn" class="btn secondary" style="display:none">Fechar</button>
     </div>
 
-    <p class="hint">Esta página (<code class="k">/resumodeconversa.html</code>) já está configurada para enviar ao webhook padrão do Conversapp. Para testes, você pode usar <code class="k">?test=success</code>, <code class="k">?test=fail</code>, <code class="k">?test=cors</code> ou sobrescrever o endpoint com <code class="k">?webhook=https://seu-n8n/...</code>.</p>
+    <p class="hint pulse" style="margin-top:20px; font-size:0.9rem; line-height:1.4; text-align:center;">
+  <span class="spinner" style="display:inline-block; vertical-align:middle; margin-right:8px"></span> ⚡ Conversapp está gerando o resumo da sua conversa…
+</p>
   </main>
 
   <script>
@@ -156,14 +153,13 @@
     const DEFAULT_WEBHOOK = 'https://ssn8n.conversapp.com.br/webhook-test/b60d2479-e3d3-4116-8d1b-51c77220bbdc';
     const N8N_WEBHOOK_URL = params.get('webhook') || DEFAULT_WEBHOOK;
 
-    // Normaliza campos vindos do Conversapp via querystring
     const normalized = {
       userId: params.get('iddousuario') || params.get('userId') || null,
-      accountId: params.get('idconta') || params.get('accountId') || params.get('id_da_conta') || null,
+      accountId: params.get('idconta') || params.get('accountId') || null,
       atendimentoId: params.get('idatendimento') || params.get('atendimentoId') || null,
       contatoId: params.get('idcontato') || params.get('contatoId') || null,
       cardId: params.get('idcard') || params.get('cardId') || null,
-      telefoneContato: params.get('telefone') || params.get('telefonecontato') || params.get('phone') || null,
+      telefoneContato: params.get('telefone') || params.get('telefonecontato') || null,
       emailContato: params.get('email') || params.get('emailcontato') || null,
       conversationId: params.get('conversationId') || null,
       channel: params.get('channel') || 'whatsapp',
@@ -173,17 +169,7 @@
     const payload = {
       source: 'conversapp',
       event: 'gerar_resumo',
-      userId: normalized.userId,
-      accountId: normalized.accountId,
-      atendimentoId: normalized.atendimentoId,
-      contatoId: normalized.contatoId,
-      cardId: normalized.cardId,
-      telefoneContato: normalized.telefoneContato,
-      emailContato: normalized.emailContato,
-      conversationId: normalized.conversationId,
-      channel: normalized.channel,
-      locale: normalized.locale,
-      // Enviamos também todos os parâmetros crus para auditoria/debug
+      ...normalized,
       metadata: Object.fromEntries([...params.entries()])
     };
 
@@ -195,15 +181,12 @@
       statusEl.textContent = text;
       statusEl.className = 'status' + (cls ? ' ' + cls : '');
     }
+
     function autoClose(ms){
-      try{ setTimeout(() => window.close(), ms); }catch(_){/* noop */}
-      try{ setTimeout(() => parent.postMessage({ type:'conversapp:resumo:done', ok:true, data:payload }, '*'), Math.max(0, ms-200)); }catch(_){/* noop */}
+      setTimeout(() => { try { window.close(); } catch(_){} }, ms);
+      setTimeout(() => { try { parent.postMessage({ type:'conversapp:resumo:done', ok:true, data:payload }, '*'); } catch(_){} }, Math.max(0, ms-200));
       setTimeout(() => { closeBtn.style.display = 'inline-flex'; }, Math.max(0, ms));
-    }{ setTimeout(() => { try{ window.close(); }catch(_){} }, ms);
-      setTimeout(() => { try{ parent.postMessage({ type:'conversapp:resumo:done', ok:true, data:payload }, '*'); }catch(_){} }, Math.max(0, ms-200));
-      setTimeout(() => { closeBtn.style.display = 'inline-flex'; }, Math.max(0, ms)); }catch(_){} }, ms);
-      setTimeout(() => { try{ parent.postMessage({ type:'conversapp:resumo:done', ok:true, data:payload }, '*'); }catch(_){} }, Math.max(0, ms-200));
-      setTimeout(() => { closeBtn.style.display = 'inline-flex'; }, Math.max(0, ms)); }
+    }
 
     retryBtn.addEventListener('click', sendWebhook);
     closeBtn.addEventListener('click', () => window.close());
@@ -217,6 +200,11 @@
           return true;
         case 'fail':
           setStatus('Simulando falha (HTTP 500)…', 'err');
+          retryBtn.style.display = 'inline-flex';
+          closeBtn.style.display = 'inline-flex';
+          return true;
+        case 'badrequest':
+          setStatus('Falha ao enviar (HTTP 400 simulado). Verifique os parâmetros.', 'err');
           retryBtn.style.display = 'inline-flex';
           closeBtn.style.display = 'inline-flex';
           return true;
@@ -241,7 +229,7 @@
       setStatus('Enviando dados para a IA…');
 
       if(!N8N_WEBHOOK_URL){
-        setStatus('Nenhum webhook informado. Passe ?webhook=https://seu-n8n/webhook/... ou use ?test=success para homologar.', 'err');
+        setStatus('Nenhum webhook informado. Configure o endpoint.', 'err');
         retryBtn.style.display = 'inline-flex';
         closeBtn.style.display = 'inline-flex';
         return;
@@ -258,37 +246,23 @@
           setStatus('Resumo enviado com sucesso! Esta página se fechará em 3 segundos.', 'ok');
           autoClose(3000);
         }else{
-          const msg = await safeText(res);
+          const msg = await res.text();
           console.warn('Webhook não-2xx', res.status, msg);
-          setStatus('Falha ao enviar (HTTP '+res.status+'). Verifique o endpoint ou CORS. Tente novamente.', 'err');
+          setStatus('Falha ao enviar (HTTP '+res.status+'). Tente novamente.', 'err');
           retryBtn.style.display = 'inline-flex';
           closeBtn.style.display = 'inline-flex';
         }
-      }catch(e){
-        console.error(e);
-        setStatus('Falha na rede/CORS bloqueado (Failed to fetch). Confirme que o n8n permite esta origem. Tente novamente.', 'err');
+      }catch(err){
+        console.error('Erro no envio', err);
+        setStatus('Erro de rede/CORS ao enviar. Verifique a conexão.', 'err');
         retryBtn.style.display = 'inline-flex';
         closeBtn.style.display = 'inline-flex';
       }
     }
 
-    async function safeText(res){ try{ return await res.text(); }catch{ return ''; } }
-
-    (async () => {
-      const img = document.getElementById('conversappMascot');
-      const fb = document.getElementById('mascotFallback');
-      if(img){
-        img.addEventListener('error', () => {
-          fb.style.display = 'block';
-          img.remove();
-        }, { once:true });
-      }
-
-      const tested = await runTestCases();
-      if(tested) return;
-      setStatus('Preparando requisição…');
-      sendWebhook();
-      setTimeout(() => { closeBtn.style.display='inline-flex'; retryBtn.style.display='inline-flex'; }, 25000);
+    (async()=>{
+      const handled = await runTestCases();
+      if(!handled) sendWebhook();
     })();
   </script>
 </body>
