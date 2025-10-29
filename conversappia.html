@@ -6,119 +6,101 @@
   <title>Chat IA Conversapp</title>
   <style>
     :root{
-      --bg:#f6f7f9;
-      --panel:#ffffff;
-      --text:#0f172a;
-      --muted:#64748b;
-      --line:#e5e7eb;
-      --bubble-ai:#ffffff;
-      --bubble-user:#f3f5f7;
-      --err:#e11d48;
-      --ok:#16a34a;
-      --radius:18px;
-      --shadow:0 20px 50px rgba(15,23,42,.08);
-      --shadow-sm:0 6px 20px rgba(15,23,42,.06);
+      --bg:#f6f7f9; --panel:#ffffff; --text:#0f172a; --muted:#64748b; --line:#e5e7eb;
+      --bubble-ai:#ffffff; --bubble-user:#f3f5f7; --err:#e11d48; --ok:#16a34a;
+      --radius:20px; --shadow:0 28px 60px rgba(15,23,42,.10); --shadow-sm:0 6px 20px rgba(15,23,42,.06);
+      --focus: rgba(2,6,23,.06);
     }
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
       margin:0; background:var(--bg); color:var(--text);
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Inter, Roboto, Helvetica, Arial;
-      display:flex; align-items:center; justify-content:center; padding:20px;
+      display:flex; align-items:center; justify-content:center; padding:24px;
     }
 
-    /* Container maior, centrado */
-    .chat-wrap{ width:min(100%, 980px); }
+    .chat-wrap{ width:min(100%, 1240px); }
     .chat-container{
-      width:100%;
-      height:min(92vh, 820px);
-      background:var(--panel);
-      border:1px solid var(--line);
-      border-radius:24px;
-      box-shadow:var(--shadow);
-      display:grid; grid-template-rows:auto auto 1fr auto;
-      overflow:hidden; position:relative;
+      width:100%; height:min(94vh, 920px); background:var(--panel);
+      border:1px solid var(--line); border-radius:28px; box-shadow:var(--shadow);
+      display:grid; grid-template-rows:auto auto 1fr auto; overflow:hidden; position:relative;
     }
 
-    .chat-header{
-      padding:18px 22px 12px; text-align:center; font-weight:800; letter-spacing:.2px;
-      color:var(--text); border-bottom:1px solid var(--line);
-      background:linear-gradient(180deg,#fff, #fff);
-    }
-    .chat-subtitle{font-weight:600; font-size:.9rem; color:var(--muted); margin-top:6px}
+    .chat-header{ padding:22px 28px 14px; text-align:center; font-weight:900; font-size:1.35rem; letter-spacing:.2px;
+      color:var(--text); border-bottom:1px solid var(--line); background:#fff; }
+    .chat-subtitle{font-weight:600; font-size:1rem; color:var(--muted); margin-top:8px}
 
-    /* Banner para token ausente */
-    .banner{
-      display:none; align-items:center; justify-content:space-between; gap:16px;
-      padding:12px 16px; background:#fff1f2; color:#881337; border-top:1px solid #fecdd3; border-bottom:1px solid #fecdd3;
-    }
+    .banner{ display:none; align-items:center; justify-content:space-between; gap:16px;
+      padding:14px 18px; background:#fff1f2; color:#881337; border-top:1px solid #fecdd3; border-bottom:1px solid #fecdd3; }
     .banner strong{display:block; margin-bottom:4px}
-    .banner-actions{display:flex; gap:10px}
+    .banner-actions{display:flex; gap:10px; flex-wrap:wrap}
     .btn{
-      border:1px solid var(--line); background:#f8fafc; color:#0f172a; padding:10px 14px; border-radius:999px; font-weight:700; cursor:pointer;
+      border:1px solid var(--line); background:#f8fafc; color:#0f172a; padding:12px 16px; border-radius:999px; font-weight:800; cursor:pointer;
       box-shadow:var(--shadow-sm);
     }
     .btn.primary{ background:#0f172a; color:#fff; border-color:#0f172a }
     .btn:disabled{ opacity:.6; cursor:not-allowed; box-shadow:none }
 
-    .chat-messages{ padding:22px; overflow:auto; display:flex; flex-direction:column; gap:14px; background:#fff }
-    .chat-messages::-webkit-scrollbar{width:10px}
+    .chat-messages{ padding:26px; overflow:auto; display:flex; flex-direction:column; gap:18px; background:#fff }
+    .chat-messages::-webkit-scrollbar{width:12px}
     .chat-messages::-webkit-scrollbar-thumb{background:#d1d5db; border-radius:99px}
 
-    .row{display:flex; gap:12px; align-items:flex-end; width:100%}
+    .row{display:flex; gap:14px; align-items:flex-end; width:100%}
     .row.user{justify-content:flex-end}
     .row.error .bubble{background:#fff1f2; border-color:#fecdd3; color:#991b1b}
 
-    /* Avatar maior da IA */
-    .avatar, .avatar img{flex:0 0 40px; width:40px; height:40px; border-radius:50%; display:block}
+    .avatar, .avatar img{flex:0 0 64px; width:64px; height:64px; border-radius:50%; display:block}
     .avatar{background:#eef2f7; border:1px solid var(--line)}
     .avatar.ai{background:#fff; display:flex; align-items:center; justify-content:center}
-    .avatar.ai img{width:28px; height:28px}
+    .avatar.ai img{width:44px; height:44px}
 
     .bubble{
-      max-width:76%;
-      padding:14px 16px; border-radius:16px; line-height:1.55; font-size:1rem;
-      border:1px solid var(--line); box-shadow:0 2px 14px rgba(0,0,0,.05);
-      transform:translateY(8px); opacity:0; animation:pop .18s ease-out forwards;
+      max-width:78%; padding:18px 20px; border-radius:20px; line-height:1.6; font-size:1.05rem;
+      border:1px solid var(--line); box-shadow:0 4px 16px rgba(0,0,0,.06);
+      transform:translateY(10px); opacity:0; animation:pop .18s ease-out forwards;
+      word-wrap:break-word; white-space:pre-wrap;
     }
     .row.ai .bubble{background:var(--bubble-ai)}
     .row.user .bubble{background:var(--bubble-user)}
-
     @keyframes pop{to{transform:none; opacity:1}}
 
-    .typing{display:inline-flex; gap:6px}
-    .dot{width:7px; height:7px; border-radius:999px; background:#cbd5e1; opacity:.9; animation:blink 1.2s infinite}
-    .dot:nth-child(2){animation-delay:.2s}
-    .dot:nth-child(3){animation-delay:.4s}
+    .typing{display:inline-flex; gap:8px}
+    .dot{width:8px; height:8px; border-radius:999px; background:#cbd5e1; opacity:.9; animation:blink 1.2s infinite}
+    .dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
     @keyframes blink{50%{opacity:.3}}
 
-    .helper{color:var(--muted); font-size:.85rem; text-align:center; padding:8px 12px; border-top:1px solid var(--line); border-bottom:1px solid var(--line); background:#fff }
+    .helper{color:var(--muted); font-size:.95rem; text-align:center; padding:12px 16px; border-top:1px solid var(--line); border-bottom:1px solid var(--line); background:#fff }
 
-    /* Input + botão de áudio */
-    .chat-input{
-      display:flex; gap:10px; padding:14px; border-top:1px solid var(--line); background:var(--panel);
-    }
-    .input-wrap{ position:relative; flex:1; display:flex; }
+    .chat-input{ display:flex; gap:12px; padding:16px; border-top:1px solid var(--line); background:var(--panel); }
     .chat-input input{
-      flex:1; border:1px solid var(--line); background:#fff; color:var(--text);
-      border-radius:999px; padding:12px 16px; padding-left:48px; font-size:16px; outline:none;
+      flex:1; border:1px solid var(--line); background:#fff; color:#0b1220;
+      border-radius:999px; padding:16px 18px; font-size:18px; outline:none;
       transition:border-color .2s ease, box-shadow .2s ease;
     }
-    .chat-input input:focus{border-color:#cbd5e1; box-shadow:0 0 0 4px rgba(2,6,23,.04)}
-
+    .chat-input input:focus{border-color:#cbd5e1; box-shadow:0 0 0 6px var(--focus)}
     .btn-send{
-      border:0; border-radius:999px; padding:12px 18px; font-weight:800; cursor:pointer;
+      border:0; border-radius:999px; padding:16px 22px; font-weight:900; cursor:pointer; font-size:16px;
       color:#111827; background:#f3f4f6; border:1px solid var(--line); box-shadow:0 2px 12px rgba(0,0,0,.06);
     }
-    .btn-mic{
-      position:absolute; left:10px; top:50%; transform:translateY(-50%);
-      width:28px; height:28px; border-radius:999px; border:1px solid var(--line); background:#fff; display:grid; place-items:center; cursor:pointer;
-    }
-    .btn-mic[data-state="rec"]{ background:#fee2e2; border-color:#fecaca }
-    .spinner{width:18px; height:18px; border:2px solid #cbd5e1; border-top-color:#111827; border-radius:50%; animation:spin 1s linear infinite}
+    .btn-send:disabled{opacity:.6; cursor:not-allowed; box-shadow:none}
+    .spinner{width:20px; height:20px; border:2px solid #cbd5e1; border-top-color:#111827; border-radius:50%; animation:spin 1s linear infinite}
     @keyframes spin{to{transform:rotate(360deg)}}
 
-    .small{font-size:.9rem}
+    /* ===== Modal de Token ===== */
+    .modal-backdrop{ display:none; position:fixed; inset:0; background:rgba(2,6,23,.45); backdrop-filter:blur(2px); align-items:center; justify-content:center; z-index:50; }
+    .modal{ width:min(96vw,560px); background:#fff; border:1px solid var(--line); border-radius:20px; box-shadow:var(--shadow); padding:22px; }
+    .modal h3{ margin:0 0 8px; font-size:1.25rem }
+    .modal p{ margin:0 0 16px; color:var(--muted) }
+    .field{ display:grid; gap:8px; margin-bottom:14px }
+    .field input{
+      width:100%; padding:14px 16px; font-size:16px; border:1px solid #d1d5db; border-radius:12px; outline:none;
+      transition:border-color .2s ease, box-shadow .2s ease;
+    }
+    .field input:focus{ border-color:#0f172a; box-shadow:0 0 0 4px var(--focus) }
+    .row-actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:8px }
+    .note{ font-size:.85rem; color:var(--muted) }
+    .success{ color:var(--ok); font-weight:700 }
+    .error{ color:var(--err); font-weight:700 }
   </style>
 </head>
 <body>
@@ -129,62 +111,114 @@
         <div class="chat-subtitle">Converse com a IA do Conversapp</div>
       </div>
 
-      <!-- Banner para token ausente -->
+      <!-- Banner de token ausente -->
       <div id="tokenBanner" class="banner" role="alert">
         <div>
           <strong>Token da OpenAI não encontrado.</strong>
           Para usar a IA, cadastre sua chave de API (sk-...) nas Configurações.
         </div>
         <div class="banner-actions">
-          <a id="tokenLink" class="btn" href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer">Abrir página da chave</a>
+          <button id="openTokenModalBtn" class="btn">Cadastrar token agora</button>
+          <a class="btn" href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer">Onde encontro?</a>
           <button id="retryBtn" class="btn primary">Já cadastrei — tentar novamente</button>
         </div>
       </div>
 
       <div id="messages" class="chat-messages" aria-live="polite"></div>
-      <div class="helper">Pressione <strong>Enter</strong> para enviar • Clique no <strong>🎤</strong> para gravar áudio</div>
+      <div class="helper">Pressione <strong>Enter</strong> para enviar</div>
 
       <div class="chat-input">
-        <div class="input-wrap">
-          <button id="micBtn" class="btn-mic" title="Gravar áudio" aria-label="Gravar áudio">🎤</button>
-          <input type="text" id="messageInput" placeholder="Digite sua pergunta..." autocomplete="off" />
-        </div>
-        <button id="sendButton" class="btn-send">
-          <span id="sendLabel">Enviar</span>
-        </button>
+        <input type="text" id="messageInput" placeholder="Digite sua pergunta..." autocomplete="off" />
+        <button id="sendButton" class="btn-send"><span id="sendLabel">Enviar</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal do Token -->
+  <div id="tokenModalBackdrop" class="modal-backdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="tk_title">
+      <h3 id="tk_title">Cadastrar token da OpenAI</h3>
+      <p>Informe sua chave que inicia com <code>sk-</code>. Ela será enviada ao nosso webhook para ser salva com segurança.</p>
+
+      <div class="field">
+        <label for="tk_input">Chave de API (sk-...)</label>
+        <input type="password" id="tk_input" placeholder="sk-..." />
+      </div>
+      <div class="note">Vincularemos este token à sua conta atual para uso em futuras conversas.</div>
+
+      <div id="tk_feedback" class="note" aria-live="polite"></div>
+
+      <div class="row-actions">
+        <button id="tk_cancel" class="btn">Cancelar</button>
+        <button id="tk_save" class="btn primary">Salvar token</button>
       </div>
     </div>
   </div>
 
   <script>
-    // ===== CONFIGURAÇÃO DE ENDPOINT =====
+    // ===== ENDPOINTS =====
     const URL_PARAMS = new URLSearchParams(window.location.search);
     const ENV = (URL_PARAMS.get('env') || URL_PARAMS.get('mode') || '').toLowerCase();
-    const DEFAULT_WEBHOOKS = {
-      test: 'https://ssn8n.conversapp.com.br/webhook-test/conversapp-chat',
-      prod: 'https://swebhooks.conversapp.com.br/webhook/conversapp-chat'
-    };
-    const WEBHOOK_URL = URL_PARAMS.get('webhook') || (ENV === 'test' ? DEFAULT_WEBHOOKS.test : DEFAULT_WEBHOOKS.prod);
 
-    // ===== DADOS DA CONVERSA (todos os campos solicitados) =====
-    const USER_DATA = {
-      iddousuario:       URL_PARAMS.get('iddousuario'),
-      iddaconta:         URL_PARAMS.get('iddaconta'),
-      iddoatendimento:   URL_PARAMS.get('iddoatendimento'),
-      iddocontato:       URL_PARAMS.get('iddocontato'),
-      iddocard:          URL_PARAMS.get('iddocard'),
-      telefonedocontato: URL_PARAMS.get('telefonedocontato'),
-      emaildocontato:    URL_PARAMS.get('emaildocontato')
+    const DEFAULTS = {
+      chat: {
+        test: 'https://ssn8n.conversapp.com.br/webhook-test/conversapp-chat',
+        prod: 'https://swebhooks.conversapp.com.br/webhook/conversapp-chat'
+      },
+      token: {
+        test: 'https://ssn8n.conversapp.com.br/webhook-test/conversapp-chat-token',
+        prod: 'https://swebhooks.conversapp.com.br/webhook/conversapp-chat-token'
+      }
     };
+
+    const WEBHOOK_CHAT  = URL_PARAMS.get('webhook')      || (ENV === 'test' ? DEFAULTS.chat.test  : DEFAULTS.chat.prod);
+    const WEBHOOK_TOKEN = URL_PARAMS.get('token_webhook')|| (ENV === 'test' ? DEFAULTS.token.test : DEFAULTS.token.prod);
+
+    // ===== METADADOS DA CONVERSA =====
+    const META_KEYS = [
+      'iddousuario','iddaconta','iddoatendimento','iddocontato','iddocard','telefonedocontato','emaildocontato'
+    ];
+
+    // Ler query e mesclar com cache local (garante persistência nos próximos envios)
+    function loadMeta(){
+      const fromLocal = JSON.parse(localStorage.getItem('conversappChatMeta') || '{}');
+      const fromQS = {};
+      META_KEYS.forEach(k => { const v = URL_PARAMS.get(k); if (v) fromQS[k] = v; });
+      const merged = { ...fromLocal, ...fromQS };
+      localStorage.setItem('conversappChatMeta', JSON.stringify(merged));
+      return merged;
+    }
+
+    function buildQuery(meta){
+      const qp = new URLSearchParams();
+      META_KEYS.forEach(k => { if (meta[k]) qp.set(k, meta[k]); });
+      return qp.toString();
+    }
+
+    function enrichBody(body, meta){
+      return {
+        ...(body || {}),
+        metadata: { ...meta },
+        // redundante por segurança: também no root do body
+        ...meta
+      };
+    }
+
+    let USER_META = loadMeta();
 
     // ===== ELEMENTOS =====
     const messagesContainer = document.getElementById('messages');
     const messageInput      = document.getElementById('messageInput');
     const sendButton        = document.getElementById('sendButton');
     const sendLabel         = document.getElementById('sendLabel');
-    const micBtn            = document.getElementById('micBtn');
     const tokenBanner       = document.getElementById('tokenBanner');
     const retryBtn          = document.getElementById('retryBtn');
+    const tokenModalBackdrop= document.getElementById('tokenModalBackdrop');
+    const tkInput           = document.getElementById('tk_input');
+    const tkSave            = document.getElementById('tk_save');
+    const tkCancel          = document.getElementById('tk_cancel');
+    const tkFeedback        = document.getElementById('tk_feedback');
+    const openTokenModalBtn = document.getElementById('openTokenModalBtn');
 
     // ===== UI helpers =====
     function rowEl(sender){
@@ -212,12 +246,14 @@
       if(sender === 'user') row.appendChild(avatar);
       return { row, bubble };
     }
+
     function addMessage(text, sender='ai'){
       const { row, bubble } = rowEl(sender);
       bubble.textContent = text;
       messagesContainer.appendChild(row);
       messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
+
     function addTyping(){
       const { row, bubble } = rowEl('ai');
       const dots = document.createElement('div');
@@ -228,39 +264,52 @@
       messagesContainer.scrollTop = messagesContainer.scrollHeight;
       return () => row.remove();
     }
+
     function setSending(isSending){
       if(isSending){
-        messageInput.disabled = true; sendButton.disabled = true; micBtn.disabled = true;
+        messageInput.disabled = true; sendButton.disabled = true;
         sendLabel.innerHTML = '<span class="spinner" aria-hidden="true"></span>';
       }else{
-        messageInput.disabled = false; sendButton.disabled = false; micBtn.disabled = false;
+        messageInput.disabled = false; sendButton.disabled = false;
         sendLabel.textContent = 'Enviar';
         messageInput.focus();
       }
     }
+
     function showTokenBanner(show=true){
       tokenBanner.style.display = show ? 'flex' : 'none';
-      // Quando não há token, bloqueia inputs
-      messageInput.disabled = show; sendButton.disabled = show; micBtn.disabled = show;
+      // Quando falta token, bloqueia inputs para evitar “loop” de erros
+      messageInput.disabled = show; sendButton.disabled = show;
     }
 
-    // ===== Lógica principal =====
-    let isRequestRunning = false;
+    function openTokenModal(){
+      tkInput.value = '';
+      tkFeedback.textContent = '';
+      tkFeedback.className = 'note';
+      tokenModalBackdrop.style.display = 'flex';
+      tkInput.focus();
+    }
+    function closeTokenModal(){
+      tokenModalBackdrop.style.display = 'none';
+    }
 
-    async function callWebhook(body, isAudio=false){
-      // monta query com todos os campos
-      const params = new URLSearchParams({ ...Object.fromEntries(Object.entries(USER_DATA).filter(([,v]) => v)) });
-
-      const init = isAudio
-        ? { method:'POST', body } // FormData – não definir Content-Type manualmente
-        : { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(body || {}) };
-
-      const res = await fetch(`${WEBHOOK_URL}?${params}`, init);
+    // ===== Requisições =====
+    async function callWebhook(url, body){
+      // Sempre recarrega meta do cache (garante IDs nas próximas mensagens)
+      USER_META = loadMeta();
+      const query = buildQuery(USER_META);
+      const res = await fetch(`${url}?${query}`, {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify(enrichBody(body, USER_META))
+      });
       let data = null, txt = '';
       try { data = await res.json(); } catch { txt = await res.text(); }
-
       return { ok: res.ok, data, txt };
     }
+
+    // ===== Chat =====
+    let isRequestRunning = false;
 
     async function sendTextMessage(){
       const messageText = (messageInput.value || '').trim();
@@ -273,14 +322,13 @@
       const stopTyping = addTyping();
 
       try{
-        const { ok, data, txt } = await callWebhook({ userMessage: messageText });
+        const { ok, data, txt } = await callWebhook(WEBHOOK_CHAT, { userMessage: messageText });
 
         stopTyping();
 
-        // Tratamento de token ausente
         const missingToken =
           (data && (data.code === 'MISSING_OPENAI_TOKEN' ||
-                    /token da openai/i.test(data.message||''))) ? true : false;
+                    /token da openai|openai token/i.test(data.message||''))) ? true : false;
 
         if(missingToken){
           addMessage(data.message || 'Token da OpenAI não encontrado.', 'error');
@@ -302,91 +350,49 @@
       }
     }
 
-    // ===== Gravação de Áudio =====
-    let mediaRecorder = null;
-    let chunks = [];
-    let recTimer = null;
-    function supportsAudio(){
-      return !!(navigator.mediaDevices && window.MediaRecorder);
-    }
-
-    async function toggleRecord(){
-      if(!supportsAudio()){
-        addMessage('Seu navegador não suporta gravação de áudio.', 'error');
+    // ===== Token =====
+    async function saveToken(){
+      const token = tkInput.value.trim();
+      if(!token || !token.startsWith('sk-')){
+        tkFeedback.textContent = 'Informe uma chave válida iniciando com sk-';
+        tkFeedback.className = 'note error';
+        tkInput.focus();
         return;
       }
-      if(mediaRecorder && mediaRecorder.state === 'recording'){
-        mediaRecorder.stop();
-        return;
-      }
-      // iniciar
+      tkSave.disabled = true; tkCancel.disabled = true; tkFeedback.textContent = 'Enviando...'; tkFeedback.className = 'note';
+
       try{
-        const stream = await navigator.mediaDevices.getUserMedia({ audio:true });
-        mediaRecorder = new MediaRecorder(stream);
-        chunks = [];
-        mediaRecorder.ondataavailable = e => { if(e.data.size>0) chunks.push(e.data); };
-        mediaRecorder.onstop = async () => {
-          micBtn.dataset.state = '';
-          clearInterval(recTimer);
-          const blob = new Blob(chunks, { type: 'audio/webm' });
-          await sendAudio(blob);
-          stream.getTracks().forEach(t => t.stop());
-        };
-        mediaRecorder.start();
-        micBtn.dataset.state = 'rec';
-        // tempo máximo 60s
-        recTimer = setTimeout(()=>{ mediaRecorder?.stop(); }, 60000);
-      }catch(err){
-        console.error(err);
-        addMessage('Permissão de microfone negada.', 'error');
-      }
-    }
+        const { ok, data, txt } = await callWebhook(WEBHOOK_TOKEN, { openai_token: token });
 
-    async function sendAudio(blob){
-      if(isRequestRunning) return;
-      isRequestRunning = true;
-      setSending(true);
-      const stopTyping = addTyping();
-      try{
-        const fd = new FormData();
-        fd.append('media', 'audio');
-        fd.append('audio', blob, 'audio.webm');
-
-        const { ok, data, txt } = await callWebhook(fd, true);
-
-        stopTyping();
-
-        const missingToken =
-          (data && (data.code === 'MISSING_OPENAI_TOKEN' ||
-                    /token da openai/i.test(data.message||''))) ? true : false;
-
-        if(missingToken){
-          addMessage(data.message || 'Token da OpenAI não encontrado.', 'error');
-          showTokenBanner(true);
-          return;
-        }
-
-        if(ok && data && data.status === 'success'){
-          addMessage(data.response || 'Áudio enviado. Mensagem recebida.', 'ai');
+        if(ok && data && (data.status === 'success' || data.saved === true)){
+          tkFeedback.textContent = 'Token salvo com sucesso! Você já pode usar a IA.';
+          tkFeedback.className = 'note success';
+          // Oculta banner e fecha modal após um pequeno delay
+          setTimeout(()=>{ closeTokenModal(); showTokenBanner(false); }, 800);
         }else{
-          addMessage((data && (data.message || data.error)) || txt || 'Ocorreu um erro ao enviar o áudio.', 'error');
+          tkFeedback.textContent = (data && (data.message || data.error)) || txt || 'Não foi possível salvar o token.';
+          tkFeedback.className = 'note error';
         }
       }catch(err){
-        console.error(err);
-        addMessage('Falha ao enviar o áudio.', 'error');
+        console.error('Erro ao salvar token:', err);
+        tkFeedback.textContent = 'Falha de rede ao enviar o token.';
+        tkFeedback.className = 'note error';
       }finally{
-        setSending(false);
-        isRequestRunning = false;
+        tkSave.disabled = false; tkCancel.disabled = false;
       }
     }
 
     // ===== Eventos =====
-    sendButton.addEventListener('click', sendTextMessage);
+    document.getElementById('sendButton').addEventListener('click', sendTextMessage);
     messageInput.addEventListener('keydown', (e)=>{ if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendTextMessage(); }});
-    micBtn.addEventListener('click', toggleRecord);
-    retryBtn.addEventListener('click', () => { showTokenBanner(false); });
 
-    // Mensagem inicial
+    retryBtn.addEventListener('click', () => { showTokenBanner(false); });
+    openTokenModalBtn.addEventListener('click', openTokenModal);
+    tkCancel.addEventListener('click', closeTokenModal);
+    tkSave.addEventListener('click', saveToken);
+    tokenModalBackdrop.addEventListener('click', (e)=>{ if(e.target === tokenModalBackdrop) closeTokenModal(); });
+
+    // ===== Mensagem inicial =====
     addMessage('Olá! Analisei esta conversa. Como posso te ajudar?', 'ai');
   </script>
 </body>
