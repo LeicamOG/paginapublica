@@ -1,472 +1,338 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Conversapp IA</title>
   <style>
     :root{
-      --bg:#f6f7fb;
-      --panel:#ffffff;
-      --text:#0f172a;
-      --muted:#6b7280;
-      --line:#e5e7eb;
-      --bubble-ai:#ffffff;
-      --bubble-user:#f2f4f7;
-      --bubble-err:#ffe8ea;
-      --ok:#16a34a;
-      --err:#e11d48;
-      --brand:#0ea5e9;
-      --radius:18px;
-      --shadow:0 14px 44px rgba(15,23,42,.08);
+      --bg:#f6f7f9; --panel:#fff; --text:#0f172a; --muted:#64748b; --line:#e5e7eb;
+      --ai:#ffffff; --user:#f3f5f7; --error:#ffe9ec; --ok:#16a34a; --danger:#e11d48;
+      --radius:16px; --shadow:0 10px 30px rgba(15,23,42,.06);
     }
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
       margin:0; background:var(--bg); color:var(--text);
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Inter, Roboto, Helvetica, Arial;
-      display:flex; align-items:center; justify-content:center; padding:20px;
+      display:flex; align-items:center; justify-content:center; padding:16px;
     }
-    .chat-wrap{
-      width:min(100%, 980px);
-      height:min(94vh, 860px);
-      background:var(--panel);
-      border:1px solid var(--line);
-      border-radius:28px;
-      box-shadow:var(--shadow);
-      overflow:hidden;
-      display:grid;
-      grid-template-rows:auto 1fr auto auto;
-      position:relative;
+    .wrap{width:min(100%,900px)}
+    .chat{
+      height:min(92vh,820px); background:var(--panel); border:1px solid var(--line);
+      border-radius:24px; box-shadow:var(--shadow); display:grid; grid-template-rows:auto 1fr auto; overflow:hidden;
     }
-    /* Header */
-    .chat-header{
-      position:relative;
-      background:var(--panel);
-      border-bottom:1px solid var(--line);
-      padding:14px 18px 12px;
-      display:flex; align-items:center; justify-content:center;
+    .head{
+      display:flex; align-items:center; justify-content:center; gap:10px;
+      padding:18px 20px; border-bottom:1px solid var(--line); position:relative;
     }
-    .brand-left{
-      position:absolute; left:18px; top:50%; transform:translateY(-50%);
-      display:flex; align-items:center; gap:10px;
-    }
-    .brand-left img{width:26px; height:26px; border-radius:8px; border:1px solid var(--line); background:#fff}
-    .title-stack{ text-align:center; }
-    .title-stack .t1{
-      font-weight:800; letter-spacing:.2px; font-size:20px;
-    }
-    .title-stack .t2{
-      color:var(--muted); font-weight:600; margin-top:4px; font-size:12.8px;
-    }
-
-    /* Messages area */
-    .messages{
-      background:#fff;
-      overflow:auto; padding:22px 26px; display:flex; flex-direction:column; gap:14px;
-    }
-    .messages::-webkit-scrollbar{width:10px}
-    .messages::-webkit-scrollbar-thumb{background:#d1d5db; border-radius:999px}
-    .row{display:flex; gap:10px; align-items:flex-end; width:100%}
+    .head .brand{display:flex; align-items:center; gap:10px; font-weight:800; font-size:22px; letter-spacing:.2px}
+    .logo{width:28px; height:28px; border-radius:8px; display:grid; place-items:center; background:#eef6ed; border:1px solid #dbe7d9}
+    .logo img{width:20px; height:20px}
+    .sub{position:absolute; left:20px; top:22px; font-size:12px; color:var(--muted)}
+    .msgs{padding:20px; overflow:auto; display:flex; flex-direction:column; gap:14px; background:#fff}
+    .row{display:flex; gap:10px; align-items:flex-end}
     .row.user{justify-content:flex-end}
-    .row.error .bubble{ background:var(--bubble-err); border-color:#fecdd3; color:#991b1b }
-
-    .avatar{
-      flex:0 0 38px; width:38px; height:38px; border-radius:50%;
-      background:#fff; border:1px solid var(--line); display:flex; align-items:center; justify-content:center;
-    }
-    .avatar.ai img{ width:28px; height:28px; display:block }
-    .avatar.user{ background:#eef2ff; border-color:#e5e7eb }
-    .avatar.user svg{ width:18px; height:18px; opacity:.8 }
-
+    .avatar{flex:0 0 30px; width:30px; height:30px; border-radius:50%; background:#eef6ed; border:1px solid #e2e8f0; display:grid; place-items:center}
+    .avatar img{width:18px; height:18px}
     .bubble{
-      max-width:72%; background:#fff;
-      border:1px solid var(--line);
-      border-radius:18px; padding:14px 16px; line-height:1.6; font-size:15.6px;
-      box-shadow:0 6px 18px rgba(0,0,0,.04);
-      transform:translateY(6px); opacity:0; animation:pop .18s ease-out forwards;
-      position:relative;
+      max-width:min(76%,680px); padding:14px 16px; border-radius:14px; border:1px solid var(--line);
+      line-height:1.55; font-size:15px; box-shadow:0 2px 8px rgba(0,0,0,.04); transform:translateY(6px); opacity:0;
+      animation:pop .18s ease-out forwards; white-space:pre-wrap; word-wrap:break-word;
     }
-    .row.ai .bubble{ background:var(--bubble-ai) }
-    .row.user .bubble{
-      background:var(--bubble-user);
-      padding-right:40px; /* espaço pro ícone dentro da bolha */
-    }
-    /* ícone balança dentro da bolha do usuário */
-    .row.user .bubble::after{
-      content:"";
-      position:absolute; right:10px; top:50%; transform:translateY(-50%);
-      width:22px; height:22px; border-radius:50%; background:#fff; border:1px solid var(--line);
-      display:inline-block;
-      background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="%230f172a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v5"/><path d="M6 8l6-3 6 3"/><path d="M7 21h10"/><path d="M3 12l3-6 3 6H3z"/><path d="M15 12l3-6 3 6h-6z"/></svg>');
-      background-repeat:no-repeat; background-position:center;
-    }
-    .time{
-      position:absolute; right:10px; bottom:-18px; font-size:11.5px; color:#9aa1ac;
-    }
+    .row.ai .bubble{background:var(--ai)}
+    .row.user .bubble{background:var(--user)}
+    .row.error .bubble{background:var(--error); border-color:#fecdd3; color:#7f1d1d}
+    .t{display:block; margin-top:6px; font-size:11px; color:#8a94a6; text-align:right}
     @keyframes pop{to{transform:none; opacity:1}}
-
-    /* Typing */
-    .typing{ display:inline-flex; gap:6px; align-items:center }
+    .typing{display:inline-flex; gap:6px}
     .dot{width:6px; height:6px; border-radius:999px; background:#cbd5e1; opacity:.9; animation:blink 1.2s infinite}
-    .dot:nth-child(2){animation-delay:.18s}
-    .dot:nth-child(3){animation-delay:.36s}
+    .dot:nth-child(2){animation-delay:.2s}
+    .dot:nth-child(3){animation-delay:.4s}
     @keyframes blink{50%{opacity:.3}}
 
-    /* Helper & Input */
-    .helper{
-      color:var(--muted); font-size:.86rem; text-align:center; padding:10px 12px;
-      border-top:1px solid var(--line); background:#fff
+    .gate{
+      display:none; grid-template-columns:1fr auto auto; gap:10px; align-items:center;
+      padding:14px; border-top:1px dashed #f1c9a8; border-bottom:1px dashed #f1c9a8; background:#fff6ef;
     }
-    .input-row{
-      display:flex; gap:12px; align-items:center; padding:14px; border-top:1px solid var(--line); background:#fff;
+    .gate.show{display:grid}
+    .gate .note{font-size:14px; color:#8b5e34}
+    .gate input{
+      height:40px; border:1px solid #e6d8c8; background:#fff; border-radius:10px; padding:8px 12px; font-size:14px;
     }
-    .input-row input{
-      flex:1; border:1px solid var(--line); background:#fff; color:var(--text);
-      border-radius:999px; padding:14px 18px; font-size:15.6px; outline:none;
-      transition:border-color .2s ease, box-shadow .2s ease;
-    }
-    .input-row input:focus{border-color:#cbd5e1; box-shadow:0 0 0 6px rgba(2,6,23,.04)}
     .btn{
-      border:0; border-radius:999px; padding:12px 22px; font-weight:800; cursor:pointer;
-      color:#fff; background:#0b1324; box-shadow:0 8px 20px rgba(2,6,23,.15); letter-spacing:.2px;
-      display:inline-flex; align-items:center; gap:10px;
+      border:1px solid var(--line); background:#0f172a; color:#fff; padding:10px 14px; border-radius:12px; font-weight:700; cursor:pointer;
     }
-    .btn[disabled]{opacity:.6; cursor:not-allowed; box-shadow:none}
-    .spinner{width:16px; height:16px; border:2px solid #cbd5e1; border-top-color:#111827; border-radius:50%; animation:spin 1s linear infinite}
-    @keyframes spin{to{transform:rotate(360deg)}}
+    .btn.secondary{background:#f3f4f6; color:#111827}
+    .btn[disabled]{opacity:.6; cursor:not-allowed}
 
-    /* Token banner */
-    .token-banner{
-      display:none;
-      border-top:1px dashed #f1c9b5; border-bottom:1px dashed #f1c9b5;
-      background:#fff7ed; color:#7c2d12;
-      padding:14px 18px; align-items:center; gap:12px;
+    .inputbar{display:flex; gap:10px; padding:14px; border-top:1px solid var(--line); background:var(--panel)}
+    .inputbar input{
+      flex:1; border:1px solid var(--line); background:#fff; color:var(--text);
+      border-radius:999px; padding:14px 16px; font-size:15px; outline:none;
     }
-    .token-banner.show{display:flex}
-    .token-banner .grow{flex:1}
-    .token-banner a{color:#7c2d12; font-weight:800; text-decoration:underline}
-    .token-banner input{
-      flex:0 1 420px; border:1px solid #f1c9b5; background:#fff; color:#111;
-      border-radius:999px; padding:12px 14px; outline:none;
-    }
-    .token-banner .btn-ghost{
-      border-radius:999px; padding:11px 18px; background:#fff; border:1px solid #e5e7eb; color:#111; font-weight:700;
-    }
+    .inputbar input:disabled{background:#f8fafc}
+    .helper{color:var(--muted); font-size:.82rem; text-align:center; padding:8px 12px; border-top:1px solid var(--line); border-bottom:1px solid var(--line); background:#fff }
 
-    /* Markdown simplificado dentro das bolhas */
-    .bubble b,strong{font-weight:800}
-    .bubble i,em{font-style:italic}
+    /* Markdown leve */
+    .bubble b{font-weight:800}
+    .bubble i{font-style:italic}
   </style>
 </head>
 <body>
-  <div class="chat-wrap">
-    <!-- Header -->
-    <div class="chat-header">
-      <div class="brand-left">
-        <img src="https://leicamog.github.io/paginapublica/logosemfundosvg.svg" alt="Conversapp" referrerpolicy="no-referrer" decoding="async">
+  <div class="wrap">
+    <div class="chat">
+      <div class="head">
+        <div class="sub">Assistente de Conversa</div>
+        <div class="brand">
+          <span class="logo"><img src="https://leicamog.github.io/paginapublica/logosemfundosvg.svg" alt="Conversapp" referrerpolicy="no-referrer" decoding="async"></span>
+          Conversapp IA
+        </div>
       </div>
-      <div class="title-stack">
-        <div class="t1">Conversapp IA</div>
-        <div class="t2">Assistente de Conversa</div>
+
+      <div id="messages" class="msgs"></div>
+
+      <!-- Banner de token (aparece só quando necessário) -->
+      <div id="tokenGate" class="gate">
+        <div class="note">
+          <b>Para continuar, precisamos da sua chave da OpenAI.</b>
+          Gere em <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com/api-keys</a>.
+        </div>
+        <input id="tokenInput" type="password" placeholder="Cole sua chave (sk-...)" />
+        <button id="saveTokenBtn" class="btn">Salvar</button>
+        <button id="cancelTokenBtn" class="btn secondary">Cancelar</button>
       </div>
-    </div>
 
-    <!-- Mensagens -->
-    <div id="messages" class="messages"></div>
+      <div class="helper">Pressione <b>Enter</b> para enviar</div>
 
-    <!-- Banner de Token -->
-    <div id="tokenBanner" class="token-banner">
-      <div class="grow">
-        <strong>Para continuar, precisamos do seu token da OpenAI.</strong>
-        Gere sua chave em
-        <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com/api-keys</a>.
+      <div class="inputbar">
+        <input type="text" id="messageInput" placeholder="Digite sua mensagem..." />
+        <button id="sendBtn" class="btn"><span id="sendLbl">Enviar</span></button>
       </div>
-      <input type="password" id="tokenInput" placeholder="cole aqui seu token da OpenAI" />
-      <button id="saveTokenBtn" class="btn">Salvar</button>
-      <button id="cancelTokenBtn" class="btn-ghost">Cancelar</button>
-    </div>
-
-    <div class="helper">Pressione <strong>Enter</strong> para enviar</div>
-
-    <!-- Input -->
-    <div class="input-row">
-      <input type="text" id="messageInput" placeholder="Digite sua mensagem..." />
-      <button id="sendButton" class="btn">
-        <span id="sendLabel">Enviar</span>
-      </button>
     </div>
   </div>
 
 <script>
-(function(){
-  // ====== CONFIG & URLS ======
+(() => {
+  // ---------- CONFIG ----------
   const URL_PARAMS = new URLSearchParams(window.location.search);
   const ENV = (URL_PARAMS.get('env') || URL_PARAMS.get('mode') || '').toLowerCase();
-
-  const DEFAULTS = {
-    chat: {
-      test: 'https://ssn8n.conversapp.com.br/webhook-test/conversapp-chat',
-      prod: 'https://swebhooks.conversapp.com.br/webhook/conversapp-chat'
-    },
-    tokenCheck: {
-      test: 'https://ssn8n.conversapp.com.br/webhook-test/conversapp-check-openai-token',
-      prod: 'https://swebhooks.conversapp.com.br/webhook/conversapp-check-openai-token'
-    },
-    tokenSave: {
-      test: 'https://ssn8n.conversapp.com.br/webhook-test/conversapp-save-openai-token',
-      prod: 'https://swebhooks.conversapp.com.br/webhook/conversapp-save-openai-token'
-    }
+  const DEFAULT_WEBHOOKS = {
+    test: 'https://ssn8n.conversapp.com.br/webhook-test/conversapp-chat',
+    prod: 'https://swebhooks.conversapp.com.br/webhook/conversapp-chat'
   };
+  const TOKEN_SAVE = (ENV === 'test')
+    ? 'https://ssn8n.conversapp.com.br/webhook-test/conversapp-save-openai-token'
+    : 'https://swebhooks.conversapp.com.br/webhook/conversapp-save-openai-token';
 
-  const WEBHOOK_CHAT   = URL_PARAMS.get('webhook')   || (ENV === 'test' ? DEFAULTS.chat.test      : DEFAULTS.chat.prod);
-  const WEBHOOK_CHECK  = URL_PARAMS.get('tokenCheck')|| (ENV === 'test' ? DEFAULTS.tokenCheck.test: DEFAULTS.tokenCheck.prod);
-  const WEBHOOK_SAVE   = URL_PARAMS.get('tokenSave') || (ENV === 'test' ? DEFAULTS.tokenSave.test : DEFAULTS.tokenSave.prod);
+  const WEBHOOK_URL = URL_PARAMS.get('webhook') || (ENV === 'test' ? DEFAULT_WEBHOOKS.test : DEFAULT_WEBHOOKS.prod);
 
-  // ====== Conversapp Context ======
-  const USER_DATA = {
-    iddousuario:       URL_PARAMS.get('iddousuario'),
-    iddaconta:         URL_PARAMS.get('iddaconta'),
-    iddoatendimento:   URL_PARAMS.get('iddoatendimento'),
-    iddocontato:       URL_PARAMS.get('iddocontato'),
-    iddocard:          URL_PARAMS.get('iddocard'),
+  const U = {
+    iddousuario: URL_PARAMS.get('iddousuario'),
+    iddaconta: URL_PARAMS.get('iddaconta'),
+    iddoatendimento: URL_PARAMS.get('iddoatendimento'),
+    iddocontato: URL_PARAMS.get('iddocontato'),
+    iddocard: URL_PARAMS.get('iddocard'),
     telefonedocontato: URL_PARAMS.get('telefonedocontato'),
-    emaildocontato:    URL_PARAMS.get('emaildocontato')
+    emaildocontato: URL_PARAMS.get('emaildocontato')
   };
 
-  // Checagem mínima
-  if (!USER_DATA.iddaconta || !USER_DATA.iddoatendimento || !USER_DATA.iddousuario){
-    const href = window.location.href;
+  // ---------- GUARDS ----------
+  if (!U.iddaconta || !U.iddoatendimento) {
     document.body.innerHTML = `
-      <div style="max-width:900px;margin:40px auto;padding:24px;border:1px solid #e5e7eb;border-radius:16px;background:#fff">
-        <h1>Erro de configuração</h1>
-        <p>Faltam parâmetros obrigatórios na URL.</p>
-        <h3>URL Recebida:</h3>
-        <pre style="white-space:pre-wrap;background:#f8fafc;padding:10px;border:1px solid #e5e7eb;border-radius:8px">${href}</pre>
-        <h3>Dados</h3>
-        <ul>
-          <li><b>iddousuario:</b> ${USER_DATA.iddousuario||'(não encontrado)'}</li>
-          <li><b>iddaconta:</b> ${USER_DATA.iddaconta||'(não encontrado)'}</li>
-          <li><b>iddoatendimento:</b> ${USER_DATA.iddoatendimento||'(não encontrado)'}</li>
-        </ul>
-        <p>Exemplo de URL:<br><code>.../chat.html?iddousuario=...&iddaconta=...&iddoatendimento=...</code></p>
+      <div class="wrap">
+        <div class="chat" style="display:grid;place-items:center">
+          <div style="text-align:center;max-width:680px;padding:24px">
+            <h2>Erro de configuração</h2>
+            <p>Faltam parâmetros obrigatórios na URL.</p>
+            <pre style="white-space:break-spaces;background:#f8fafc;border:1px solid #e5e7eb;padding:12px;border-radius:10px">${location.href}</pre>
+            <p>Inclua <code>iddaconta</code> e <code>iddoatendimento</code>.</p>
+          </div>
+        </div>
       </div>`;
     return;
   }
 
-  // ====== DOM ======
-  const messagesEl    = document.getElementById('messages');
-  const messageInput  = document.getElementById('messageInput');
-  const sendButton    = document.getElementById('sendButton');
-  const sendLabel     = document.getElementById('sendLabel');
+  // ---------- ELEMENTOS ----------
+  const $msgs = document.getElementById('messages');
+  const $input = document.getElementById('messageInput');
+  const $send = document.getElementById('sendBtn');
+  const $sendLbl = document.getElementById('sendLbl');
+  const $gate = document.getElementById('tokenGate');
+  const $token = document.getElementById('tokenInput');
+  const $saveToken = document.getElementById('saveTokenBtn');
+  const $cancelToken = document.getElementById('cancelTokenBtn');
 
-  const tokenBanner   = document.getElementById('tokenBanner');
-  const tokenInput    = document.getElementById('tokenInput');
-  const saveTokenBtn  = document.getElementById('saveTokenBtn');
-  const cancelTokenBtn= document.getElementById('cancelTokenBtn');
-
-  // ====== Helpers ======
+  // ---------- UTIL ----------
   const tz = 'America/Sao_Paulo';
-  const nowBR = () => new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit', timeZone:tz});
+  const hhmm = (d=new Date()) => new Intl.DateTimeFormat('pt-BR',{hour:'2-digit',minute:'2-digit',timeZone:tz}).format(d);
 
-  function parseMarkdown(text){
-    if(!text) return '';
-    // escapa básico
-    text = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    // *negrito*  (prioritário)
-    text = text.replace(/\*(.*?)\*/g, '<strong>$1</strong>');
-    // _itálico_
-    text = text.replace(/_(.*?)_/g, '<em>$1</em>');
-    // quebras de linha
-    text = text.replace(/\n/g,'<br/>');
+  function parseLiteMarkdown(text){
+    if (!text) return '';
+    // negrito: *palavra*
+    text = text.replace(/\*(.+?)\*/g, '<b>$1</b>');
+    // itálico: _palavra_
+    text = text.replace(/_(.+?)_/g, '<i>$1</i>');
     return text;
   }
 
-  function rowEl(sender){
-    const row = document.createElement('div');
-    row.className = 'row ' + (sender==='user' ? 'user' : (sender==='error'?'error':'ai'));
-
+  function row(sender, html){
+    const r = document.createElement('div');
+    r.className = 'row ' + (sender==='user'?'user':(sender==='error'?'error':'ai'));
     const avatar = document.createElement('div');
-    avatar.className = 'avatar ' + (sender==='user' ? 'user' : 'ai');
+    avatar.className = 'avatar';
+    const img = document.createElement('img');
+    img.src = 'https://leicamog.github.io/paginapublica/logosemfundosvg.svg';
+    img.alt = 'Conversapp'; img.referrerPolicy='no-referrer'; img.decoding='async';
+    avatar.appendChild(img);
 
-    if(sender==='user'){
-      avatar.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="#0f172a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21a8 8 0 1 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>';
-    }else{
-      const img = document.createElement('img');
-      img.src = 'https://leicamog.github.io/paginapublica/logosemfundosvg.svg';
-      img.alt = 'Conversapp'; img.decoding='async'; img.referrerPolicy='no-referrer';
-      avatar.appendChild(img);
-    }
+    const b = document.createElement('div');
+    b.className = 'bubble';
+    b.innerHTML = html;
 
-    const bubble = document.createElement('div');
-    bubble.className = 'bubble';
+    const t = document.createElement('span');
+    t.className = 't';
+    t.textContent = hhmm();
 
-    if(sender!=='user') row.appendChild(avatar);
-    row.appendChild(bubble);
-    if(sender==='user') row.appendChild(avatar);
+    b.appendChild(t);
 
-    // timestamp
-    const t = document.createElement('div');
-    t.className = 'time';
-    t.textContent = nowBR();
-    bubble.appendChild(t);
-
-    return {row, bubble};
+    if(sender !== 'user'){ r.appendChild(avatar); r.appendChild(b); }
+    else { r.appendChild(b); r.appendChild(avatar); }
+    $msgs.appendChild(r);
+    $msgs.scrollTop = $msgs.scrollHeight;
   }
 
-  function addMessage(htmlOrText, sender){
-    const {row, bubble} = rowEl(sender);
-    if(sender==='ai' || sender==='error'){
-      bubble.innerHTML = parseMarkdown(htmlOrText);
-    }else{
-      bubble.innerHTML = parseMarkdown(htmlOrText);
-    }
-    messagesEl.appendChild(row);
-    messagesEl.scrollTop = messagesEl.scrollHeight;
+  function addMessage(text, who='ai'){
+    row(who, parseLiteMarkdown(text));
   }
-
   function addTyping(){
-    const {row, bubble} = rowEl('ai');
-    const dots = document.createElement('div');
-    dots.className = 'typing';
+    const r = document.createElement('div');
+    r.className = 'row ai';
+    const avatar = document.createElement('div'); avatar.className='avatar';
+    const img = document.createElement('img'); img.src='https://leicamog.github.io/paginapublica/logosemfundosvg.svg'; img.alt='Conversapp';
+    avatar.appendChild(img);
+    const b = document.createElement('div'); b.className='bubble';
+    const dots = document.createElement('div'); dots.className='typing';
     dots.innerHTML = '<span class="dot"></span><span class="dot"></span><span class="dot"></span>';
-    bubble.appendChild(dots);
-    messagesEl.appendChild(row);
-    messagesEl.scrollTop = messagesEl.scrollHeight;
-    return () => row.remove();
+    b.appendChild(dots);
+    r.appendChild(avatar); r.appendChild(b);
+    $msgs.appendChild(r); $msgs.scrollTop = $msgs.scrollHeight;
+    return () => r.remove();
   }
-
-  function setSending(is){
-    if(is){
-      messageInput.disabled = true; sendButton.disabled = true;
-      sendLabel.innerHTML = '<span class="spinner" aria-hidden="true"></span>';
-    }else{
-      messageInput.disabled = false; sendButton.disabled = false;
-      sendLabel.textContent = 'Enviar';
-      messageInput.focus();
-    }
+  function setSending(v){
+    if(v){ $input.disabled=true; $send.disabled=true; $sendLbl.innerHTML='<span class="dot"></span><span class="dot"></span><span class="dot"></span>'; }
+    else { $input.disabled=false; $send.disabled=false; $sendLbl.textContent='Enviar'; $input.focus(); }
   }
-
+  function tokenKey(){ return `conv.token.ok:${U.iddaconta}` }
   function setTokenGate(show){
-    tokenBanner.classList.toggle('show', !!show);
-    messageInput.disabled = !!show;
-    sendButton.disabled = !!show;
+    $gate.classList.toggle('show', !!show);
+    $input.disabled = !!show;
+    $send.disabled = !!show;
   }
 
-  // ====== Networking ======
-  function qsWithUserData(extra={}){
-    const params = new URLSearchParams({
-      ...USER_DATA,
-      ...extra
-    });
-    return params.toString();
+  // ---------- TOKEN: não pedir sempre ----------
+  const hasTokenHint = localStorage.getItem(tokenKey()) === '1';
+  if(!hasTokenHint){
+    // só mostraremos depois se o servidor pedir; começamos com input liberado.
   }
 
-  async function checkToken(){
-    try{
-      const res = await fetch(`${WEBHOOK_CHECK}?${qsWithUserData()}`, {method:'POST'});
-      let data=null; try{ data = await res.json(); }catch{}
-      if(res.ok && data && data.status==='ok' && data.has_token===true){
-        setTokenGate(false);
-        return true;
-      }else{
-        setTokenGate(true);
-        return false;
-      }
-    }catch{
-      // se falhar a checagem, por segurança bloqueia
-      setTokenGate(true);
-      return false;
-    }
-  }
-
-  async function saveToken(){
-    const token = (tokenInput.value||'').trim();
-    if(!token) return;
-    saveTokenBtn.disabled = true;
-    try{
-      const body = { openai_token: token, ...USER_DATA };
-      const res = await fetch(`${WEBHOOK_SAVE}`, {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify(body)
-      });
-      const data = await res.json();
-      if(res.ok && data && data.status==='ok'){
-        setTokenGate(false);
-        addMessage('Token salvo. Você já pode enviar sua mensagem. :blush:', 'ai');
-      }else{
-        addMessage('Não consegui salvar seu token. Tente novamente.', 'error');
-        setTokenGate(true);
-      }
-    }catch(e){
-      addMessage('Falha ao salvar o token. Tente novamente.', 'error');
-      setTokenGate(true);
-    }finally{
-      saveTokenBtn.disabled = false;
-    }
-  }
-
+  // ---------- ENVIO ----------
   async function sendMessage(){
-    const messageText = (messageInput.value||'').trim();
-    if(!messageText) return;
+    const txt = ($input.value||'').trim();
+    if(!txt) return;
+
+    // Se banner de token estiver ativo, não permite enviar
+    if($gate.classList.contains('show')) return;
 
     setSending(true);
-    addMessage(messageText, 'user');
-    messageInput.value='';
+    addMessage(txt, 'user');
+    $input.value = '';
     const stopTyping = addTyping();
 
     try{
-      const params = qsWithUserData({ userMessage: messageText });
-      const res = await fetch(`${WEBHOOK_CHAT}?${params}`, {
+      const params = new URLSearchParams({
+        ...U,
+        userMessage: txt
+      });
+      const res = await fetch(`${WEBHOOK_URL}?${params}`,{
         method:'POST',
         headers:{'Content-Type':'application/json'}
       });
 
-      let data=null; let text='';
-      try{ data = await res.json(); }catch{ text = await res.text(); }
+      let data=null, raw='';
+      try{ data=await res.json(); }catch{ raw=await res.text(); }
 
       stopTyping();
 
-      // se backend avisar falta de token
-      if(data && data.status==='need_token'){
-        setTokenGate(true);
-        addMessage('Para continuar, precisamos do seu token da OpenAI.', 'error');
-        return;
-      }
-
-      if(res.ok && data && data.status==='success'){
-        addMessage(data.response || 'Ok.', 'ai');
+      if(res.ok && data){
+        if(data.status === 'need_token'){ // servidor avisou que falta token
+          setTokenGate(true);
+          addMessage('Para continuar, precisamos do seu token da OpenAI.', 'error');
+          localStorage.removeItem(tokenKey());
+          return;
+        }
+        if(data.status === 'success'){
+          addMessage(data.response||''); // ai
+          // Marca que está tudo ok (não pedir de novo)
+          localStorage.setItem(tokenKey(),'1');
+        }else{
+          addMessage((data.message||data.error||raw||'Ocorreu um erro.'),'error');
+        }
       }else{
-        const msg = (data && (data.message||data.error)) || text || 'Ocorreu um erro.';
-        addMessage(msg, 'error');
+        addMessage(raw||'Não foi possível conectar ao assistente.','error');
       }
-    }catch(err){
+    }catch(e){
       stopTyping();
-      console.error(err);
-      addMessage('Não foi possível conectar ao assistente.', 'error');
+      console.error(e);
+      addMessage('Falha de rede. Tente novamente.','error');
     }finally{
       setSending(false);
     }
   }
 
-  // ====== Events ======
-  sendButton.addEventListener('click', sendMessage);
-  messageInput.addEventListener('keydown', (e)=>{
-    if(e.key==='Enter' && !e.shiftKey){
-      e.preventDefault();
-      sendMessage();
-    }
+  $send.addEventListener('click', sendMessage);
+  $input.addEventListener('keydown', e=>{
+    if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendMessage(); }
   });
 
-  saveTokenBtn.addEventListener('click', saveToken);
-  cancelTokenBtn.addEventListener('click', ()=> setTokenGate(true));
+  // ---------- SALVAR TOKEN ----------
+  async function saveToken(){
+    const val = ($token.value||'').trim();
+    if(!val) return;
+    $saveToken.disabled = true;
 
-  // Mensagem inicial
-  addMessage('Olá! Estou pronto para ajudar. Envie sua pergunta quando quiser.', 'ai');
+    try{
+      const res = await fetch(TOKEN_SAVE,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ iddaconta: U.iddaconta, openai_token: val })
+      });
+      let data=null, raw='';
+      try{ data=await res.json(); }catch{ raw=await res.text(); }
 
-  // Primeira ação: validar token
-  checkToken();
+      // Aceita {"status":"ok"} ou {"ok":true}
+      const ok = res.ok && data && (data.status==='ok' || data.ok===true);
 
+      if(ok){
+        addMessage('Token salvo. Você já pode enviar sua mensagem. 😊','ai');
+        setTokenGate(false);
+        localStorage.setItem(tokenKey(),'1');
+        $token.value='';
+      }else{
+        addMessage((data && (data.message||data.error)) || raw || 'Não consegui salvar seu token. Tente novamente.','error');
+      }
+    }catch(e){
+      console.error(e);
+      addMessage('Erro ao salvar token. Tente novamente.','error');
+    }finally{
+      $saveToken.disabled = false;
+    }
+  }
+  $saveToken.addEventListener('click', saveToken);
+  $cancelToken.addEventListener('click', ()=> setTokenGate(false));
+
+  // ---------- BOAS-VINDAS ----------
+  addMessage('Olá! Posso ajudar analisando seu contexto. Envie sua pergunta quando quiser.','ai');
 })();
 </script>
 </body>
