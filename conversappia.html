@@ -1,240 +1,434 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Chat IA Conversapp</title>
-  <style>
-    :root{
-      --bg:#f7f7f8;
-      --panel:#ffffff;
-      --text:#0f172a;
-      --muted:#6b7280;
-      --line:#e5e7eb;
-      --bubble-ai:#ffffff;
-      --bubble-user:#f2f4f7;
-      --ok:#16a34a;
-      --err:#e11d48;
-      --radius:16px;
-      --shadow:0 10px 30px rgba(15,23,42,.06);
-    }
-
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0; background:var(--bg); color:var(--text);
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, Helvetica, Arial;
-      display:flex; align-items:center; justify-content:center; padding:16px;
-    }
-
-    .chat-container{ width:min(100%, 460px); height:min(92vh, 720px); background:var(--panel); border:1px solid var(--line); border-radius:20px; box-shadow:var(--shadow); display:grid; grid-template-rows:auto 1fr auto auto; overflow:hidden; margin:0 auto; position:relative }
-
-    .chat-header{
-      background:var(--panel);
-      padding:16px 18px; text-align:center; font-weight:700; letter-spacing:.2px;
-      color:var(--text); border-bottom:1px solid var(--line);
-    }
-    .chat-header .subtitle{font-weight:500; font-size:.82rem; color:var(--muted); margin-top:6px}
-
-    .chat-messages{ flex:1; padding:18px; overflow:auto; display:flex; flex-direction:column; gap:12px; scroll-behavior:smooth; background:#fff }
-    .chat-messages::-webkit-scrollbar{width:10px}
-    .chat-messages::-webkit-scrollbar-track{background:transparent}
-    .chat-messages::-webkit-scrollbar-thumb{background:#d1d5db; border-radius:99px}
-
-    .row{display:flex; gap:10px; align-items:flex-end; width:100%}
-    .row.user{justify-content:flex-end}
-
-    .avatar, .avatar img{flex:0 0 32px; width:32px; height:32px; border-radius:50%; display:block}
-    .avatar{background:#e5e7eb; border:1px solid var(--line)}
-    .avatar.user{background:#e5e7eb}
-    .avatar.ai{background:#fff; border:1px solid var(--line); display:flex; align-items:center; justify-content:center}
-    .avatar.ai img{width:20px; height:20px}
-
-    .bubble{
-      max-width:72%; padding:12px 14px; border-radius:14px; line-height:1.5; font-size:.95rem;
-      border:1px solid var(--line); box-shadow:0 2px 8px rgba(0,0,0,.04);
-      transform:translateY(6px); opacity:0; animation:pop .2s ease-out forwards;
-    }
-    .row.ai .bubble{background:var(--bubble-ai)}
-    .row.user .bubble{background:var(--bubble-user)}
-    .row.error .bubble{background:#fff1f2; border-color:#fecdd3; color:#991b1b}
-
-    @keyframes pop{to{transform:none; opacity:1}}
-
-    .typing{display:inline-flex; gap:6px}
-    .dot{width:6px; height:6px; border-radius:999px; background:#cbd5e1; opacity:.9; animation:blink 1.2s infinite}
-    .dot:nth-child(2){animation-delay:.2s}
-    .dot:nth-child(3){animation-delay:.4s}
-    @keyframes blink{50%{opacity:.3}}
-
-    .chat-input{
-      display:flex; gap:10px; padding:12px; border-top:1px solid var(--line); background:var(--panel);
-    }
-    .chat-input input{
-      flex:1; border:1px solid var(--line); background:#fff; color:var(--text);
-      border-radius:999px; padding:12px 14px; font-size:15px; outline:none;
-      transition:border-color .2s ease, box-shadow .2s ease;
-    }
-    .chat-input input:focus{border-color:#cbd5e1; box-shadow:0 0 0 4px rgba(2,6,23,.04)}
-
-    .chat-input button{
-      border:0; border-radius:999px; padding:12px 18px; font-weight:700; cursor:pointer;
-      color:#111827; background:#f3f4f6; border:1px solid var(--line); box-shadow:0 2px 8px rgba(0,0,0,.04);
-    }
-    .chat-input button:disabled{opacity:.6; cursor:not-allowed; box-shadow:none}
-    .spinner{width:16px; height:16px; border:2px solid #cbd5e1; border-top-color:#111827; border-radius:50%; animation:spin 1s linear infinite}
-    @keyframes spin{to{transform:rotate(360deg)}}
-
-    .helper{color:var(--muted); font-size:.8rem; text-align:center; padding:8px 12px; border-top:1px solid var(--line); border-bottom:1px solid var(--line); background:#fff }
-  </style>
-</head>
-<body>
-
-  <div class="chat-container">
-    <div class="chat-header">
-      Assistente de Conversa
-      <div class="subtitle">Converse com a IA do Conversapp</div>
-    </div>
-
-    <div id="messages" class="chat-messages"></div>
-    <div class="helper">Pressione <strong>Enter</strong> para enviar</div>
-
-    <div class="chat-input">
-      <input type="text" id="messageInput" placeholder="Digite sua pergunta..." />
-      <button id="sendButton">
-        <span id="sendLabel">Enviar</span>
-      </button>
-    </div>
-  </div>
-
-  <script>
-    // --- CONFIGURAÇÃO ---
-    // URL do seu webhook de PRODUÇÃO no n8n
-    const WEBHOOK_URL = 'https://swebhooks.conversapp.com.br/webhook/39e3119f-396d-4faa-a72a-9bd998267d51';
-    // ---------------------
-
-    const messagesContainer = document.getElementById('messages');
-    const messageInput = document.getElementById('messageInput');
-    const sendButton = document.getElementById('sendButton');
-    const sendLabel = document.getElementById('sendLabel');
-
-    // Pega os dados da URL (iddaconta, iddoatendimento)
-    const urlParams = new URLSearchParams(window.location.search);
-    const USER_DATA = {
-        iddaconta: urlParams.get('iddaconta'),
-        iddoatendimento: urlParams.get('iddoatendimento')
-    };
-
-    // VERIFICAÇÃO DE ERRO COM MODO DEBUG
-    if (!USER_DATA.iddaconta || !USER_DATA.iddoatendimento) {
-        document.body.innerHTML = `
-            <div class="chat-container" style="justify-content: center; align-items: center; text-align: center; padding: 20px;">
-                <h1>Erro de Configuração</h1>
-                <p>A janela foi aberta, mas faltam informações da conversa na URL.</p>
-                <h3>URL Recebida:</h3>
-                <p style="word-break: break-all; background: #f0f0f0; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 0.9em;">${window.location.href}</p>
-                <h3>Dados Encontrados:</h3>
-                <ul style="text-align: left; display: inline-block;">
-                    <li><b>iddaconta:</b> ${USER_DATA.iddaconta || '(não encontrado)'}</li>
-                    <li><b>iddoatendimento:</b> ${USER_DATA.iddoatendimento || '(não encontrado)'}</li>
-                </ul>
-                <p><b>Ação necessária:</b> Verifique a configuração do botão no Conversapp. A URL deve ser parecida com: <br><code>https://.../chat.html?iddaconta=VALOR&iddoatendimento=VALOR</code></p>
-            </div>
-        `;
-        throw new Error("Parâmetros da URL ausentes.");
-    }
-
-    function rowEl(sender){
-      const row = document.createElement('div');
-      row.className = 'row ' + (sender === 'user' ? 'user' : (sender === 'error' ? 'error' : 'ai'));
-
-      let avatar;
-      if(sender === 'user'){
-        avatar = document.createElement('div');
-        avatar.className = 'avatar user';
-      } else {
-        avatar = document.createElement('div');
-        avatar.className = 'avatar ai';
-        const img = document.createElement('img');
-        img.src = 'https://leicamog.github.io/paginapublica/logosemfundosvg.svg';
-        img.alt = 'Conversapp';
-        img.referrerPolicy = 'no-referrer';
-        img.decoding = 'async';
-        avatar.appendChild(img);
+{
+  "name": "Conversapp • Chat IA (estável, v2 Assistants)",
+  "nodes": [
+    {
+      "id": "webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [ -700, 0 ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "conversapp-chat",
+        "responseMode": "responseNode"
       }
-
-      const bubble = document.createElement('div');
-      bubble.className = 'bubble';
-
-      if(sender !== 'user') row.appendChild(avatar);
-      row.appendChild(bubble);
-      if(sender === 'user') row.appendChild(avatar);
-      return { row, bubble };
-    }
-
-    function addMessage(text, sender){
-      const { row, bubble } = rowEl(sender);
-      bubble.textContent = text;
-      messagesContainer.appendChild(row);
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    }
-
-    function addTyping(){
-      const { row, bubble } = rowEl('ai');
-      const dots = document.createElement('div');
-      dots.className = 'typing';
-      dots.innerHTML = '<span class="dot"></span><span class="dot"></span><span class="dot"></span>';
-      bubble.appendChild(dots);
-      messagesContainer.appendChild(row);
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
-      return () => row.remove();
-    }
-
-    function setSending(isSending){
-      if(isSending){
-        messageInput.disabled = true; sendButton.disabled = true; sendLabel.innerHTML = '<span class="spinner" aria-hidden="true"></span>';
-      }else{
-        messageInput.disabled = false; sendButton.disabled = false; sendLabel.textContent = 'Enviar';
-        messageInput.focus();
-      }
-    }
-
-    async function sendMessage(){
-      const messageText = (messageInput.value || '').trim();
-      if(!messageText) return;
-
-      setSending(true);
-      addMessage(messageText, 'user');
-      messageInput.value = '';
-      const stopTyping = addTyping();
-
-      try{
-        const params = new URLSearchParams({ ...USER_DATA, userMessage: messageText });
-        const res = await fetch(`${WEBHOOK_URL}?${params}`, { method:'POST', headers:{ 'Content-Type':'application/json' } });
-
-        let data = null; let text = '';
-        try{ data = await res.json(); } catch{ text = await res.text(); }
-
-        stopTyping();
-        if(res.ok && data && data.status === 'success'){
-          addMessage(data.response || 'Mensagem recebida.', 'ai');
-        } else {
-          const msg = (data && (data.message || data.error)) || text || 'Ocorreu um erro.';
-          addMessage(msg, 'error');
+    },
+    {
+      "id": "tokens",
+      "name": "Supabase (Tokens)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [ -480, 0 ],
+      "credentials": { "supabaseApi": { "id": "REPLACE_ME", "name": "Conversapp GPT - Service Key" } },
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "Tokens OpenAI - Conversapp",
+        "returnAll": true,
+        "filters": {
+          "conditions": [
+            { "keyName": "account_id", "condition": "eq", "keyValue": "={{ $('Webhook').item.json.query.iddaconta }}" }
+          ]
         }
-      }catch(err){
-        stopTyping();
-        console.error('Erro ao chamar o webhook:', err);
-        addMessage('Não foi possível conectar ao assistente.', 'error');
-      }finally{
-        setSending(false);
+      }
+    },
+    {
+      "id": "ifHasToken",
+      "name": "IF • Tem token?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [ -260, 0 ],
+      "parameters": {
+        "conditions": {
+          "options": { "version": 2, "typeValidation": "strict" },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.openai_token }}",
+              "operator": { "type": "string", "operation": "notEmpty", "singleValue": true },
+              "rightValue": ""
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "noTokenResponse",
+      "name": "Respond • Sem token",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [ -80, 200 ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"status\":\"error\",\"message\":\"Token da OpenAI não encontrado para esta conta. Cadastre o token para usar o chat.\"}"
+      }
+    },
+    {
+      "id": "ifHasAssistant",
+      "name": "IF • Já tem assistant?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [ -40, 0 ],
+      "parameters": {
+        "conditions": {
+          "options": { "version": 2, "typeValidation": "strict" },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.openai_assistant_id }}",
+              "operator": { "type": "string", "operation": "notEmpty", "singleValue": true },
+              "rightValue": ""
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "createAssistant",
+      "name": "HTTP • Criar Assistant",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [ 160, 200 ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/assistants",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $('Supabase (Tokens)').item.json.openai_token }}" },
+            { "name": "OpenAI-Beta", "value": "assistants=v2" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\":\"gpt-4o\",\n  \"name\":\"Assistente Conversapp - {{ $('Supabase (Tokens)').item.json.account_id }}\",\n  \"instructions\":\"Você é um assistente de IA especializado. Responda sempre com base no histórico contextual enviado. Se não houver dados suficientes, diga que não possui informações suficientes. Seja direto e útil.\"\n}",
+        "options": { "timeout": 120000 }
+      }
+    },
+    {
+      "id": "updateAssistantId",
+      "name": "Supabase • Salvar assistant_id",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [ 360, 200 ],
+      "credentials": { "supabaseApi": { "id": "REPLACE_ME", "name": "Conversapp GPT - Service Key" } },
+      "parameters": {
+        "operation": "update",
+        "tableId": "Tokens OpenAI - Conversapp",
+        "filters": {
+          "conditions": [
+            { "keyName": "id", "condition": "eq", "keyValue": "={{ $('Supabase (Tokens)').item.json.id }}" }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            { "fieldId": "openai_assistant_id", "fieldValue": "={{ $json.id }}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "chatThreadsGet",
+      "name": "Supabase (Threads)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [ 580, 0 ],
+      "credentials": { "supabaseApi": { "id": "REPLACE_ME", "name": "Conversapp GPT - Service Key" } },
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "chat_threads",
+        "returnAll": true,
+        "filters": {
+          "conditions": [
+            { "keyName": "atendimento_id", "condition": "eq", "keyValue": "={{ $('Webhook').item.json.query.iddoatendimento }}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "ifHasThread",
+      "name": "IF • Já tem thread?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [ 800, 0 ],
+      "parameters": {
+        "conditions": {
+          "options": { "version": 2, "typeValidation": "strict" },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.openai_thread_id }}",
+              "operator": { "type": "string", "operation": "notEmpty", "singleValue": true },
+              "rightValue": ""
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "helenaToken",
+      "name": "HTTP • Criar Token Temporário (WTS)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [ 1020, 200 ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.helena.run/core/v1/company/aa32a2f5-3fee-43ed-92dd-656d8bb1591d/tokens",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "pn_ZPp3hU2Cf99IjQSTfa4IK6x0JWDlwf9PmyXaPwpFg" },
+            { "name": "accept", "value": "application/json" },
+            { "name": "content-type", "value": "application/*+json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": { "parameters": [ { "name": "name", "value": "temporario" } ] }
+      }
+    },
+    {
+      "id": "wtsHistory",
+      "name": "HTTP • Buscar Histórico (WTS)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [ 1240, 200 ],
+      "parameters": {
+        "url": "=https://api.wts.chat/chat/v1/session/{{ $('Webhook').item.json.query.iddoatendimento }}/message?PageSize=100",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "={{ $json.token }}" },
+            { "name": "accept", "value": "application/json" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "threadCreate",
+      "name": "HTTP • Criar Thread",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [ 1440, 200 ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/threads",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $('Supabase (Tokens)').item.json.openai_token }}" },
+            { "name": "OpenAI-Beta", "value": "assistants=v2" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "formatHistory",
+      "name": "Code • Formatar Histórico",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [ 1660, 200 ],
+      "parameters": {
+        "jsCode": "// history do WTS\nconst items = $node[\"HTTP • Buscar Histórico (WTS)\"].json.items || [];\nconst ctx = items.map(msg => {\n  let t = '';\n  if (msg.type === 'TEXT' && msg.text) t = msg.text;\n  else if (msg.type === 'AUDIO' && msg?.details?.transcription?.text) t = `[Áudio] ${msg.details.transcription.text}`;\n  if (!t) return null;\n  const s = msg.direction === 'TO_HUB' ? 'Atendente' : 'Cliente';\n  return `${s}: ${t}`;\n}).filter(Boolean).join('\\n');\n\nconst context = ctx ? `Aqui está o histórico da conversa. Use este contexto para responder à próxima pergunta.\\n\\n---\\n${ctx}\\n---` : 'Esta é a primeira interação nesta conversa.';\n\nreturn [{ json: { content: context } }];"
+      }
+    },
+    {
+      "id": "msgContext",
+      "name": "HTTP • Add Mensagem (contexto)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [ 1860, 200 ],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.openai.com/v1/threads/{{ $('HTTP • Criar Thread').item.json.id }}/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $('Supabase (Tokens)').item.json.openai_token }}" },
+            { "name": "OpenAI-Beta", "value": "assistants=v2" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"role\":\"user\", \"content\": $json.content } }}",
+        "options": { "timeout": 120000, "retry": { "maxTries": 3, "waitBetweenTries": 3000 } }
+      }
+    },
+    {
+      "id": "msgUser",
+      "name": "HTTP • Add Mensagem (pergunta)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [ 2060, 200 ],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.openai.com/v1/threads/{{ $('HTTP • Criar Thread').item.json.id }}/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $('Supabase (Tokens)').item.json.openai_token }}" },
+            { "name": "OpenAI-Beta", "value": "assistants=v2" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "specifyBody": "json",
+        "jsonBody": "={ \"role\":\"user\", \"content\":\"{{ $('Webhook').item.json.query.userMessage }}\" }",
+        "options": { "timeout": 120000, "retry": { "maxTries": 3, "waitBetweenTries": 3000 } }
+      }
+    },
+    {
+      "id": "threadSave",
+      "name": "Supabase • Salvar thread",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [ 2260, 200 ],
+      "credentials": { "supabaseApi": { "id": "REPLACE_ME", "name": "Conversapp GPT - Service Key" } },
+      "parameters": {
+        "operation": "create",
+        "tableId": "chat_threads",
+        "fieldsUi": {
+          "fieldValues": [
+            { "fieldId": "atendimento_id", "fieldValue": "={{ $('Webhook').item.json.query.iddoatendimento }}" },
+            { "fieldId": "openai_thread_id", "fieldValue": "={{ $('HTTP • Criar Thread').item.json.id }}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "runCreate",
+      "name": "HTTP • Executar Assistente",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [ 1460, -200 ],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.openai.com/v1/threads/{{ $node['Supabase (Threads)'].json.openai_thread_id || $node['HTTP • Criar Thread'].json.id }}/runs",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $('Supabase (Tokens)').item.json.openai_token }}" },
+            { "name": "OpenAI-Beta", "value": "assistants=v2" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "specifyBody": "json",
+        "jsonBody": "={ \"assistant_id\": \"{{ $('Supabase (Tokens)').item.json.openai_assistant_id }}\" }",
+        "options": { "timeout": 120000 }
+      }
+    },
+    {
+      "id": "wait1",
+      "name": "Wait 1s",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [ 1660, -200 ],
+      "parameters": { "amount": 1 }
+    },
+    {
+      "id": "runStatus",
+      "name": "HTTP • Verificar Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [ 1860, -200 ],
+      "parameters": {
+        "url": "=https://api.openai.com/v1/threads/{{ $node['Supabase (Threads)'].json.openai_thread_id || $node['HTTP • Criar Thread'].json.id }}/runs/{{ $('HTTP • Executar Assistente').item.json.id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $('Supabase (Tokens)').item.json.openai_token }}" },
+            { "name": "OpenAI-Beta", "value": "assistants=v2" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "ifDone",
+      "name": "IF • Run finalizado?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [ 2060, -200 ],
+      "parameters": {
+        "conditions": {
+          "options": { "version": 2 },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.status }}",
+              "operator": { "type": "string", "operation": "regex", "singleValue": true },
+              "rightValue": "^(completed|failed|cancelled)$"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "messagesGet",
+      "name": "HTTP • Buscar Mensagens",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [ 2260, -200 ],
+      "parameters": {
+        "url": "=https://api.openai.com/v1/threads/{{ $node['Supabase (Threads)'].json.openai_thread_id || $node['HTTP • Criar Thread'].json.id }}/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $('Supabase (Tokens)').item.json.openai_token }}" },
+            { "name": "OpenAI-Beta", "value": "assistants=v2" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "respond",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [ 2460, -200 ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\":\"success\",\n  \"response\":\"{{\n    ($json.data || [])\n      .filter(i => i.role === 'assistant')\n      .map(i => i.content && i.content[0] && i.content[0].text && i.content[0].text.value)\n      .find(v => !!v) || 'Sem resposta gerada.'\n  }}\"\n}"
       }
     }
-
-    sendButton.addEventListener('click', sendMessage);
-    messageInput.addEventListener('keydown', (e)=>{ if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendMessage(); }});
-
-    addMessage('Olá! Analisei esta conversa. Como posso te ajudar?', 'ai');
-  </script>
-</body>
-</html>
+  ],
+  "connections": {
+    "Webhook": { "main": [ [ { "node": "Supabase (Tokens)", "type": "main", "index": 0 } ] ] },
+    "Supabase (Tokens)": { "main": [ [ { "node": "IF • Tem token?", "type": "main", "index": 0 } ] ] },
+    "IF • Tem token?": {
+      "main": [
+        [ { "node": "IF • Já tem assistant?", "type": "main", "index": 0 } ],
+        [ { "node": "Respond • Sem token", "type": "main", "index": 0 } ]
+      ]
+    },
+    "IF • Já tem assistant?": {
+      "main": [
+        [ { "node": "Supabase (Threads)", "type": "main", "index": 0 } ],
+        [ { "node": "HTTP • Criar Assistant", "type": "main", "index": 0 } ]
+      ]
+    },
+    "HTTP • Criar Assistant": { "main": [ [ { "node": "Supabase • Salvar assistant_id", "type": "main", "index": 0 } ] ] },
+    "Supabase • Salvar assistant_id": { "main": [ [ { "node": "Supabase (Threads)", "type": "main", "index": 0 } ] ] },
+    "Supabase (Threads)": {
+      "main": [
+        [ { "node": "IF • Já tem thread?", "type": "main", "index": 0 } ]
+      ]
+    },
+    "IF • Já tem thread?": {
+      "main": [
+        [ { "node": "HTTP • Executar Assistente", "type": "main", "index": 0 } ],
+        [ { "node": "HTTP • Criar Token Temporário (WTS)", "type": "main", "index": 0 } ]
+      ]
+    },
+    "HTTP • Criar Token Temporário (WTS)": { "main": [ [ { "node": "HTTP • Buscar Histórico (WTS)", "type": "main", "index": 0 } ] ] },
+    "HTTP • Buscar Histórico (WTS)": { "main": [ [ { "node": "HTTP • Criar Thread", "type": "main", "index": 0 } ] ] },
+    "HTTP • Criar Thread": { "main": [ [ { "node": "Code • Formatar Histórico", "type": "main", "index": 0 } ] ] },
+    "Code • Formatar Histórico": { "main": [ [ { "node": "HTTP • Add Mensagem (contexto)", "type": "main", "index": 0 } ] ] },
+    "HTTP • Add Mensagem (contexto)": { "main": [ [ { "node": "HTTP • Add Mensagem (pergunta)", "type": "main", "index": 0 } ] ] },
+    "HTTP • Add Mensagem (pergunta)": { "main": [ [ { "node": "Supabase • Salvar thread", "type": "main", "index": 0 } ] ] },
+    "Supabase • Salvar thread": { "main": [ [ { "node": "HTTP • Executar Assistente", "type": "main", "index": 0 } ] ] },
+    "HTTP • Executar Assistente": { "main": [ [ { "node": "Wait 1s", "type": "main", "index": 0 } ] ] },
+    "Wait 1s": { "main": [ [ { "node": "HTTP • Verificar Status", "type": "main", "index": 0 } ] ] },
+    "HTTP • Verificar Status": { "main": [ [ { "node": "IF • Run finalizado?", "type": "main", "index": 0 } ] ] },
+    "IF • Run finalizado?": {
+      "main": [
+        [ { "node": "HTTP • Buscar Mensagens", "type": "main", "index": 0 } ],
+        [ { "node": "Wait 1s", "type": "main", "index": 0 } ]
+      ]
+    },
+    "HTTP • Buscar Mensagens": { "main": [ [ { "node": "Respond to Webhook", "type": "main", "index": 0 } ] ] }
+  }
+}
