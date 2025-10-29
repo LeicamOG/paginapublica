@@ -15,151 +15,102 @@
       --line:#e6e8ee;
       --bubble-ai:#ffffff;
       --bubble-user:#f2f4f7;
-      --ok:#16a34a;
       --err:#e11d48;
       --radius:18px;
       --shadow:0 12px 40px rgba(15,23,42,.06);
-      --brand:#0ea5e9;
       --btn:#0b1220;
       --btnText:#ffffff;
     }
-
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
       margin:0; background:var(--bg); color:var(--text);
-      font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, Helvetica, Arial;
+      font-family:"Plus Jakarta Sans",ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Helvetica,Arial;
       display:flex; align-items:center; justify-content:center; padding:18px;
     }
-
-    .chat-wrap{
-      width:min(1200px, 96vw);
-      height:min(90vh, 860px);
-      display:flex; align-items:center; justify-content:center;
-    }
-
+    .chat-wrap{ width:min(1200px,96vw); height:min(90vh,860px); display:flex; align-items:center; justify-content:center; }
     .chat-container{
-      width:100%; height:100%;
-      background:var(--panel); border:1px solid var(--line); border-radius:24px;
-      box-shadow:var(--shadow); display:grid; grid-template-rows:auto 1fr auto auto; overflow:hidden; position:relative
+      width:100%; height:100%; background:var(--panel); border:1px solid var(--line); border-radius:24px;
+      box-shadow:var(--shadow); display:grid; grid-template-rows:auto 1fr auto auto; overflow:hidden; position:relative;
     }
-
     /* Header */
-    .chat-header{
-      padding:14px 18px; border-bottom:1px solid var(--line); background:#fff;
-      display:flex; align-items:center; justify-content:center; position:relative;
-    }
-    .brand{
-      display:flex; align-items:center; gap:10px; transform: translateX(-18px); /* compensa ícone lateral */
-    }
-    .brand img{
-      width:28px; height:28px; border-radius:8px; display:block;
-    }
-    .brand-title{
-      display:flex; flex-direction:column; align-items:center; line-height:1.1;
-    }
-    .brand-title .name{
-      font-weight:800; letter-spacing:.2px; font-size:18px;
-    }
-    .brand-title .subtitle{
-      margin-top:3px; font-weight:600; font-size:12.5px; color:var(--muted);
-    }
-
+    .chat-header{ padding:14px 18px; border-bottom:1px solid var(--line); background:#fff; display:flex; align-items:center; justify-content:center; position:relative; }
+    .brand{ display:flex; align-items:center; gap:10px; transform: translateX(-18px); }
+    .brand img{ width:28px; height:28px; border-radius:8px; display:block; }
+    .brand-title{ display:flex; flex-direction:column; align-items:center; line-height:1.1; }
+    .brand-title .name{ font-weight:800; letter-spacing:.2px; font-size:18px; }
+    .brand-title .subtitle{ margin-top:3px; font-weight:600; font-size:12.5px; color:var(--muted); }
     /* Messages */
-    .chat-messages{ padding:20px 24px; overflow:auto; display:flex; flex-direction:column; gap:16px; background:#fff }
+    .chat-messages{ padding:20px 24px; overflow:auto; display:flex; flex-direction:column; gap:16px; background:#fff; }
     .chat-messages::-webkit-scrollbar{width:10px}
     .chat-messages::-webkit-scrollbar-thumb{background:#d1d5db; border-radius:99px}
-
-    .row{display:flex; gap:12px; align-items:flex-end; width:100%}
-    .row.user{justify-content:flex-end}
-
+    .row{ display:flex; gap:12px; align-items:flex-end; width:100%; }
+    .row.user{ justify-content:flex-end; }
     .avatar{
       flex:0 0 34px; width:34px; height:34px; border-radius:50%;
       background:#fff; border:1px solid var(--line); display:flex; align-items:center; justify-content:center;
       box-shadow:0 2px 8px rgba(0,0,0,.05);
     }
-    .avatar.ai img{width:22px; height:22px}
-    .avatar.user{background:#fff}
-    .avatar.user svg{width:20px; height:20px; opacity:.9}
-
+    .avatar.ai img{ width:22px; height:22px }
+    .avatar.user svg{ width:20px; height:20px; color:#111827; opacity:.9 }
     .bubble{
-      max-width:72%; padding:14px 16px 18px; border-radius:16px; line-height:1.55; font-size:.98rem;
+      max-width:72%; padding:14px 16px 20px; border-radius:16px; line-height:1.55; font-size:.98rem;
       border:1px solid var(--line); box-shadow:0 2px 10px rgba(0,0,0,.04);
       transform:translateY(6px); opacity:0; animation:pop .2s ease-out forwards; position:relative;
+      word-wrap:break-word; overflow-wrap:anywhere;
     }
-    .row.ai .bubble{background:var(--bubble-ai)}
-    .row.user .bubble{background:var(--bubble-user)}
-    .row.error .bubble{background:#fff1f2; border-color:#fecdd3; color:#991b1b}
-
-    /* Bigger logo inside AI bubble */
+    .row.ai .bubble{ background:var(--bubble-ai) }
+    .row.user .bubble{ background:var(--bubble-user) }
+    .row.error .bubble{ background:#fff1f2; border-color:#fecdd3; color:#991b1b }
+    /* Selo grande da IA dentro do balão */
     .ai-badge{
       position:absolute; left:-42px; top:8px; width:36px; height:36px; border-radius:50%;
       border:1px solid var(--line); background:#fff; display:flex; align-items:center; justify-content:center;
-      box-shadow:0 2px 8px rgba(0,0,0,.05)
+      box-shadow:0 2px 8px rgba(0,0,0,.05); z-index:1;
     }
-    .ai-badge img{width:24px; height:24px}
-
-    /* Scale icon inside USER bubble (balança) */
+    .ai-badge img{ width:24px; height:24px }
+    /* Ícone de balança dentro do balão do usuário */
     .user-scale{
       position:absolute; right:-10px; top:-10px; width:28px; height:28px; border-radius:50%;
       background:#eef2ff; border:1px solid #e0e7ff; display:flex; align-items:center; justify-content:center;
       box-shadow:0 2px 8px rgba(0,0,0,.05)
     }
-    .user-scale svg{width:16px; height:16px; color:#6366f1}
-
-    .time{
-      position:absolute; right:10px; bottom:5px; font-size:11px; color:#9aa3af; user-select:none;
-    }
-
-    @keyframes pop{to{transform:none; opacity:1}}
-
-    /* Typing */
-    .typing{display:inline-flex; gap:6px}
-    .dot{width:6px; height:6px; border-radius:999px; background:#cbd5e1; opacity:.9; animation:blink 1.2s infinite}
-    .dot:nth-child(2){animation-delay:.2s}
-    .dot:nth-child(3){animation-delay:.4s}
-    @keyframes blink{50%{opacity:.3}}
-
+    .user-scale svg{ width:16px; height:16px; color:#6366f1 }
+    .time{ position:absolute; right:10px; bottom:6px; font-size:11px; color:#9aa3af; user-select:none; }
+    @keyframes pop{ to{ transform:none; opacity:1 } }
+    /* Digitando… */
+    .typing-dots{ display:inline-flex; gap:6px }
+    .dot{ width:6px; height:6px; border-radius:999px; background:#cbd5e1; opacity:.9; animation:blink 1.2s infinite }
+    .dot:nth-child(2){ animation-delay:.2s } .dot:nth-child(3){ animation-delay:.4s }
+    @keyframes blink{ 50%{ opacity:.3 } }
+    .typing-row .ai-badge{ display:none }           /* <- evita sobreposição durante digitação */
+    .typing-row .bubble{ min-height:42px; margin-top:4px }  /* espaço dedicado */
     /* Helper */
-    .helper{color:var(--muted); font-size:.8rem; text-align:center; padding:8px 12px; border-top:1px solid var(--line); border-bottom:1px solid var(--line); background:#fff }
-
+    .helper{ color:var(--muted); font-size:.8rem; text-align:center; padding:8px 12px; border-top:1px solid var(--line); border-bottom:1px solid var(--line); background:#fff }
     /* Input */
-    .chat-input{
-      display:flex; gap:12px; padding:14px; border-top:1px solid var(--line); background:var(--panel);
-    }
+    .chat-input{ display:flex; gap:12px; padding:14px; border-top:1px solid var(--line); background:var(--panel) }
     .chat-input input{
       flex:1; border:1px solid var(--line); background:#fff; color:var(--text);
       border-radius:999px; padding:14px 16px; font-size:15.5px; outline:none;
-      transition:border-color .2s ease, box-shadow .2s ease;
-      box-shadow:0 2px 10px rgba(0,0,0,.04) inset;
+      transition:border-color .2s ease, box-shadow .2s ease; box-shadow:0 2px 10px rgba(0,0,0,.04) inset;
     }
-    .chat-input input:focus{border-color:#cbd5e1; box-shadow:0 0 0 4px rgba(2,6,23,.04)}
-
+    .chat-input input:focus{ border-color:#cbd5e1; box-shadow:0 0 0 4px rgba(2,6,23,.04) }
     .chat-input button{
       border:0; border-radius:999px; padding:14px 22px; font-weight:800; cursor:pointer;
-      color:var(--btnText); background:var(--btn); letter-spacing:.2px;
-      box-shadow:0 10px 22px rgba(2,6,23,.18);
+      color:var(--btnText); background:var(--btn); letter-spacing:.2px; box-shadow:0 10px 22px rgba(2,6,23,.18);
     }
-    .chat-input button:disabled{opacity:.6; cursor:not-allowed; box-shadow:none}
-    .spinner{width:18px; height:18px; border:2px solid #cbd5e1; border-top-color:#fff; border-radius:50%; animation:spin 1s linear infinite}
-    @keyframes spin{to{transform:rotate(360deg)}}
-
-    /* Token mini-modal (mostrado só se necessário) */
-    .token-bar{
-      display:none; gap:8px; align-items:center; padding:10px 14px; border-top:1px dashed var(--line); background:#fcfcff;
-    }
-    .token-bar input{
-      flex:1; border:1px solid var(--line); border-radius:10px; padding:10px 12px; font-size:14px;
-    }
-    .token-bar button{
-      border:0; background:#111827; color:#fff; padding:10px 14px; border-radius:10px; font-weight:700;
-    }
+    .chat-input button:disabled{ opacity:.6; cursor:not-allowed; box-shadow:none }
+    .spinner{ width:18px; height:18px; border:2px solid #cbd5e1; border-top-color:#fff; border-radius:50%; animation:spin 1s linear infinite }
+    @keyframes spin{ to{ transform:rotate(360deg) } }
+    /* Token bar */
+    .token-bar{ display:none; gap:8px; align-items:center; padding:10px 14px; border-top:1px dashed var(--line); background:#fcfcff }
+    .token-bar input{ flex:1; border:1px solid var(--line); border-radius:10px; padding:10px 12px; font-size:14px }
+    .token-bar button{ border:0; background:#111827; color:#fff; padding:10px 14px; border-radius:10px; font-weight:700 }
   </style>
 </head>
 <body>
   <div class="chat-wrap">
     <div class="chat-container">
-      <!-- Header -->
       <div class="chat-header">
         <div class="brand">
           <img src="https://leicamog.github.io/paginapublica/logosemfundosvg.svg" alt="Conversapp" />
@@ -170,18 +121,15 @@
         </div>
       </div>
 
-      <!-- Messages -->
       <div id="messages" class="chat-messages"></div>
       <div class="helper">Pressione <strong>Enter</strong> para enviar</div>
 
-      <!-- Token bar (aparece apenas se a API retornar need_token) -->
       <div id="tokenBar" class="token-bar">
         <span style="font-size:12.5px;color:var(--muted)">Informe seu token da OpenAI para continuar:</span>
         <input id="tokenInput" type="password" placeholder="sk-..." />
         <button id="tokenSave">Salvar</button>
       </div>
 
-      <!-- Input -->
       <div class="chat-input">
         <input type="text" id="messageInput" placeholder="Digite sua mensagem..." />
         <button id="sendButton"><span id="sendLabel">Enviar</span></button>
@@ -190,9 +138,7 @@
   </div>
 
   <script>
-    /* =========================
-       Configuração / Endpoints
-    ==========================*/
+    /* ========= Config ========= */
     const URL_PARAMS = new URLSearchParams(window.location.search);
     const ENV = (URL_PARAMS.get('env') || URL_PARAMS.get('mode') || '').toLowerCase();
     const DEFAULT_WEBHOOKS = {
@@ -201,7 +147,6 @@
     };
     const WEBHOOK_URL = URL_PARAMS.get('webhook') || (ENV === 'test' ? DEFAULT_WEBHOOKS.test : DEFAULT_WEBHOOKS.prod);
 
-    // Todos os campos vindos do Conversapp
     const USER_DATA = {
       iddousuario: URL_PARAMS.get('iddousuario'),
       iddaconta: URL_PARAMS.get('iddaconta'),
@@ -212,62 +157,64 @@
       emaildocontato: URL_PARAMS.get('emaildocontato')
     };
 
-    /* =========================
-       Utilitários
-    ==========================*/
+    /* ===== Util ===== */
     const tz = 'America/Sao_Paulo';
-    const fmt = new Intl.DateTimeFormat('pt-BR', {
-      hour: '2-digit', minute: '2-digit', timeZone: tz
-    });
-    function nowBrTime(){ return fmt.format(new Date()); }
-
+    const fmt = new Intl.DateTimeFormat('pt-BR', { hour:'2-digit', minute:'2-digit', timeZone:tz });
     const messagesContainer = document.getElementById('messages');
     const messageInput = document.getElementById('messageInput');
     const sendButton = document.getElementById('sendButton');
-    const sendLabel = document.getElementById('sendLabel');
+    const sendLabel  = document.getElementById('sendLabel');
     const tokenBar   = document.getElementById('tokenBar');
     const tokenInput = document.getElementById('tokenInput');
     const tokenSave  = document.getElementById('tokenSave');
+
+    function brTime(){ return fmt.format(new Date()); }
+
+    // Markdown leve (suas regras: *bold*, _italic_)
+    function escapeHtml(s){ return s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+    function renderMarkdown(src){
+      let s = escapeHtml(String(src ?? ''));
+      // links [texto](url)
+      s = s.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+      // código `...`
+      s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
+      // **bold** (opcional)
+      s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+      // *bold* (sua regra)
+      s = s.replace(/\*([^*]+)\*/g, '<strong>$1</strong>');
+      // _itálico_
+      s = s.replace(/_([^_]+)_/g, '<em>$1</em>');
+      // quebras de linha
+      s = s.replace(/\n/g, '<br>');
+      return s;
+    }
 
     function makeRow(sender){
       const row = document.createElement('div');
       row.className = 'row ' + (sender === 'user' ? 'user' : (sender === 'error' ? 'error' : 'ai'));
 
-      // avatar à esquerda/direita
-      let avatar = document.createElement('div');
+      const avatar = document.createElement('div');
       avatar.className = 'avatar ' + (sender === 'user' ? 'user' : 'ai');
-      if(sender === 'user'){
-        avatar.innerHTML = `
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <path d="M7 20h10M6 20a6 6 0 0 1 12 0M8 7.5c0 2.2 1.8 4 4 4s4-1.8 4-4S14.2 3.5 12 3.5 8 5.3 8 7.5Z" stroke-width="1.6"/>
-          </svg>`;
-      } else {
-        avatar.innerHTML = `<img src="https://leicamog.github.io/paginapublica/logosemfundosvg.svg" alt="IA">`;
-      }
+      avatar.innerHTML = sender === 'user'
+        ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M7 20h10M6 20a6 6 0 0 1 12 0M8 7.5c0 2.2 1.8 4 4 4s4-1.8 4-4S14.2 3.5 12 3.5 8 5.3 8 7.5Z" stroke-width="1.6"/></svg>`
+        : `<img src="https://leicamog.github.io/paginapublica/logosemfundosvg.svg" alt="IA">`;
 
       const bubble = document.createElement('div');
       bubble.className = 'bubble';
 
-      // Badge maior dentro do balão da IA
       if(sender !== 'user' && sender !== 'error'){
         const badge = document.createElement('div');
         badge.className = 'ai-badge';
         badge.innerHTML = `<img src="https://leicamog.github.io/paginapublica/logosemfundosvg.svg" alt="Conversapp">`;
         bubble.appendChild(badge);
       }
-
-      // Ícone de balança dentro do balão do usuário
       if(sender === 'user'){
         const scale = document.createElement('div');
         scale.className = 'user-scale';
-        scale.innerHTML = `
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path d="M12 3v4m-7 3 4 8 4-8m-8 0h8m6-3-4 8-4-8m8 0h-8m4 11V7" stroke-width="1.6"/>
-        </svg>`;
+        scale.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 3v4m-7 3 4 8 4-8m-8 0h8m6-3-4 8-4-8m8 0h-8m4 11V7" stroke-width="1.6"/></svg>`;
         bubble.appendChild(scale);
       }
 
-      // ordem
       if(sender !== 'user') row.appendChild(avatar);
       row.appendChild(bubble);
       if(sender === 'user') row.appendChild(avatar);
@@ -276,10 +223,9 @@
 
     function addMessage(text, sender){
       const { row, bubble } = makeRow(sender);
-      bubble.textContent = text;
+      bubble.innerHTML = renderMarkdown(text);
       const t = document.createElement('div');
-      t.className = 'time';
-      t.textContent = nowBrTime();
+      t.className = 'time'; t.textContent = brTime();
       bubble.appendChild(t);
       messagesContainer.appendChild(row);
       messagesContainer.scrollTop = messagesContainer.scrollHeight;
@@ -287,12 +233,13 @@
 
     function addTyping(){
       const { row, bubble } = makeRow('ai');
+      row.classList.add('typing-row');              // <- evita sobreposição do selo
       const dots = document.createElement('div');
-      dots.className = 'typing';
+      dots.className = 'typing-dots';
       dots.innerHTML = '<span class="dot"></span><span class="dot"></span><span class="dot"></span>';
       bubble.appendChild(dots);
       const t = document.createElement('div');
-      t.className = 'time'; t.textContent = nowBrTime();
+      t.className = 'time'; t.textContent = brTime();
       bubble.appendChild(t);
       messagesContainer.appendChild(row);
       messagesContainer.scrollTop = messagesContainer.scrollHeight;
@@ -305,8 +252,7 @@
         sendLabel.innerHTML = '<span class="spinner" aria-hidden="true"></span>';
       }else{
         messageInput.disabled = false; sendButton.disabled = false;
-        sendLabel.textContent = 'Enviar';
-        messageInput.focus();
+        sendLabel.textContent = 'Enviar'; messageInput.focus();
       }
     }
 
@@ -316,7 +262,6 @@
         const token = (tokenInput.value || '').trim();
         if(!token) return;
         try{
-          // Envia para o mesmo webhook com ação de salvar token
           const params = new URLSearchParams({ ...USER_DATA, action:'save_token', account_id: accountId || USER_DATA.iddaconta });
           await fetch(`${WEBHOOK_URL}?${params}`, {
             method:'POST',
@@ -325,9 +270,7 @@
           });
           tokenBar.style.display = 'none';
           addMessage('Token salvo. Você já pode enviar sua mensagem. 😉', 'ai');
-        }catch(e){
-          addMessage('Não foi possível salvar o token. Tente novamente.', 'error');
-        }
+        }catch{ addMessage('Não foi possível salvar o token. Tente novamente.', 'error'); }
       };
     }
 
@@ -341,16 +284,11 @@
       const stopTyping = addTyping();
 
       try{
-        // Persistimos todos os parâmetros SEMPRE
         const params = new URLSearchParams({ ...USER_DATA, userMessage: messageText });
+        const res = await fetch(`${WEBHOOK_URL}?${params}`, { method:'POST', headers:{ 'Content-Type':'application/json' } });
 
-        const res = await fetch(`${WEBHOOK_URL}?${params.toString()}`, {
-          method:'POST',
-          headers:{ 'Content-Type': 'application/json' }
-        });
-
-        let data = null; let raw = '';
-        try{ data = await res.json(); } catch{ raw = await res.text(); }
+        let data=null, raw='';
+        try{ data = await res.json(); }catch{ raw = await res.text(); }
 
         stopTyping();
 
@@ -366,17 +304,19 @@
         }else{
           addMessage(raw || 'Ocorreu um erro.', 'error');
         }
-      }catch(err){
+      }catch(e){
         stopTyping();
-        console.error('Erro ao chamar o webhook:', err);
         addMessage('Não foi possível conectar ao assistente.', 'error');
       }finally{
         setSending(false);
       }
     }
 
+    // Eventos
     sendButton.addEventListener('click', sendMessage);
-    messageInput.addEventListener('keydown', (e)=>{ if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendMessage(); }});
+    messageInput.addEventListener('keydown', e=>{
+      if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendMessage(); }
+    });
 
     // Mensagem inicial
     addMessage('Olá! Posso ajudar analisando seu contexto. Envie sua pergunta quando quiser.', 'ai');
