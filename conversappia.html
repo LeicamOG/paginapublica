@@ -3,323 +3,307 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Conversapp IA — Assistente de Conversa</title>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <title>Conversapp IA</title>
   <style>
     :root{
-      --bg:#f5f7fb;
-      --panel:#ffffff;
-      --text:#0f172a;
-      --muted:#64748b;
-      --line:#e6e8ee;
-      --bubble-ai:#ffffff;
-      --bubble-user:#f2f4f7;
-      --err:#e11d48;
-      --radius:18px;
-      --shadow:0 12px 40px rgba(15,23,42,.06);
-      --btn:#0b1220;
-      --btnText:#ffffff;
+      --bg:#f6f7fb; --panel:#fff; --text:#0f172a; --muted:#64748b; --line:#e5e7eb;
+      --bubble-ai:#fff; --bubble-user:#f2f4f7; --err:#ffe4e6; --err-text:#9f1239;
+      --radius:18px; --shadow:0 20px 40px rgba(15,23,42,.08);
+      --btn:#0b1220; --btn-text:#fff; --brand:#101828;
     }
-    *{box-sizing:border-box}
-    html,body{height:100%}
+    *{box-sizing:border-box} html,body{height:100%}
     body{
-      margin:0; background:var(--bg); color:var(--text);
-      font-family:"Plus Jakarta Sans",ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Helvetica,Arial;
-      display:flex; align-items:center; justify-content:center; padding:18px;
+      margin:0;background:var(--bg);color:var(--text);
+      font-family:Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      display:flex;align-items:center;justify-content:center;padding:16px;
     }
-    .chat-wrap{ width:min(1200px,96vw); height:min(90vh,860px); display:flex; align-items:center; justify-content:center; }
+
     .chat-container{
-      width:100%; height:100%; background:var(--panel); border:1px solid var(--line); border-radius:24px;
-      box-shadow:var(--shadow); display:grid; grid-template-rows:auto 1fr auto auto; overflow:hidden; position:relative;
+      width:min(100%, 980px); height:min(94vh, 880px);
+      background:var(--panel); border:1px solid var(--line); border-radius:28px;
+      box-shadow:var(--shadow); display:grid; grid-template-rows:auto 1fr auto auto; overflow:hidden;
     }
+
     /* Header */
-    .chat-header{ padding:14px 18px; border-bottom:1px solid var(--line); background:#fff; display:flex; align-items:center; justify-content:center; position:relative; }
-    .brand{ display:flex; align-items:center; gap:10px; transform: translateX(-18px); }
-    .brand img{ width:28px; height:28px; border-radius:8px; display:block; }
-    .brand-title{ display:flex; flex-direction:column; align-items:center; line-height:1.1; }
-    .brand-title .name{ font-weight:800; letter-spacing:.2px; font-size:18px; }
-    .brand-title .subtitle{ margin-top:3px; font-weight:600; font-size:12.5px; color:var(--muted); }
-    /* Messages */
-    .chat-messages{ padding:20px 24px; overflow:auto; display:flex; flex-direction:column; gap:16px; background:#fff; }
-    .chat-messages::-webkit-scrollbar{width:10px}
-    .chat-messages::-webkit-scrollbar-thumb{background:#d1d5db; border-radius:99px}
-    .row{ display:flex; gap:12px; align-items:flex-end; width:100%; }
-    .row.user{ justify-content:flex-end; }
-    .avatar{
-      flex:0 0 34px; width:34px; height:34px; border-radius:50%;
-      background:#fff; border:1px solid var(--line); display:flex; align-items:center; justify-content:center;
-      box-shadow:0 2px 8px rgba(0,0,0,.05);
+    .chat-header{display:flex;align-items:center;justify-content:center;gap:10px;padding:16px 18px;border-bottom:1px solid var(--line);background:var(--panel)}
+    .chat-header .logo{
+      width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+      background:#e8f3ec;border:1px solid #d5e7dc;
     }
-    .avatar.ai img{ width:22px; height:22px }
-    .avatar.user svg{ width:20px; height:20px; color:#111827; opacity:.9 }
+    .chat-header .logo img{width:22px;height:22px}
+    .chat-title{text-align:center}
+    .chat-title h1{margin:0;font-weight:900;letter-spacing:.2px;font-size:22px;color:var(--brand)}
+    .chat-title .subtitle{margin-top:3px;font-weight:600;font-size:12px;color:var(--muted)}
+
+    /* Mensagens */
+    .chat-messages{padding:22px 22px 28px;overflow:auto;display:flex;flex-direction:column;gap:18px;background:#fff}
+    .row{display:flex;gap:12px;align-items:flex-end;width:100%}
+    .row.user{justify-content:flex-end}
+    .row.typing{opacity:.95}
+
+    .avatar,.avatar img{flex:0 0 38px;width:38px;height:38px;border-radius:50%;display:block}
+    .avatar{background:#e5e7eb;border:1px solid var(--line)}
+    .avatar.ai{background:#fff;border:1px solid var(--line);display:flex;align-items:center;justify-content:center}
+    .avatar.ai img{width:26px;height:26px}
+    .avatar.user{background:#f1f5f9;border:1px solid var(--line);display:flex;align-items:center;justify-content:center}
+    .avatar.user svg{width:20px;height:20px;opacity:.7}
+
     .bubble{
-      max-width:72%; padding:14px 16px 20px; border-radius:16px; line-height:1.55; font-size:.98rem;
+      max-width:72%; padding:16px 18px; border-radius:18px; line-height:1.55; font-size:15px;
       border:1px solid var(--line); box-shadow:0 2px 10px rgba(0,0,0,.04);
       transform:translateY(6px); opacity:0; animation:pop .2s ease-out forwards; position:relative;
-      word-wrap:break-word; overflow-wrap:anywhere;
+      word-wrap:break-word; overflow-wrap:break-word;
     }
-    .row.ai .bubble{ background:var(--bubble-ai) }
-    .row.user .bubble{ background:var(--bubble-user) }
-    .row.error .bubble{ background:#fff1f2; border-color:#fecdd3; color:#991b1b }
-    /* Selo grande da IA dentro do balão */
-    .ai-badge{
-      position:absolute; left:-42px; top:8px; width:36px; height:36px; border-radius:50%;
-      border:1px solid var(--line); background:#fff; display:flex; align-items:center; justify-content:center;
-      box-shadow:0 2px 8px rgba(0,0,0,.05); z-index:1;
-    }
-    .ai-badge img{ width:24px; height:24px }
-    /* Ícone de balança dentro do balão do usuário */
-    .user-scale{
-      position:absolute; right:-10px; top:-10px; width:28px; height:28px; border-radius:50%;
-      background:#eef2ff; border:1px solid #e0e7ff; display:flex; align-items:center; justify-content:center;
-      box-shadow:0 2px 8px rgba(0,0,0,.05)
-    }
-    .user-scale svg{ width:16px; height:16px; color:#6366f1 }
-    .time{ position:absolute; right:10px; bottom:6px; font-size:11px; color:#9aa3af; user-select:none; }
-    @keyframes pop{ to{ transform:none; opacity:1 } }
-    /* Digitando… */
-    .typing-dots{ display:inline-flex; gap:6px }
-    .dot{ width:6px; height:6px; border-radius:999px; background:#cbd5e1; opacity:.9; animation:blink 1.2s infinite }
-    .dot:nth-child(2){ animation-delay:.2s } .dot:nth-child(3){ animation-delay:.4s }
-    @keyframes blink{ 50%{ opacity:.3 } }
-    .typing-row .ai-badge{ display:none }           /* <- evita sobreposição durante digitação */
-    .typing-row .bubble{ min-height:42px; margin-top:4px }  /* espaço dedicado */
-    /* Helper */
-    .helper{ color:var(--muted); font-size:.8rem; text-align:center; padding:8px 12px; border-top:1px solid var(--line); border-bottom:1px solid var(--line); background:#fff }
-    /* Input */
-    .chat-input{ display:flex; gap:12px; padding:14px; border-top:1px solid var(--line); background:var(--panel) }
+    .row.ai   .bubble{background:var(--bubble-ai)}
+    .row.user .bubble{background:var(--bubble-user)}
+    .row.error .bubble{background:var(--err); color:var(--err-text); border-color:#fecdd3}
+
+    .time{position:absolute;right:12px;bottom:-18px;font-size:11px;color:#94a3b8}
+    @keyframes pop{to{transform:none;opacity:1}}
+
+    /* Digitando */
+    .typing{display:inline-flex;gap:6px}
+    .dot{width:6px;height:6px;border-radius:999px;background:#cbd5e1;opacity:.9;animation:blink 1.2s infinite}
+    .dot:nth-child(2){animation-delay:.2s}
+    .dot:nth-child(3){animation-delay:.4s}
+    @keyframes blink{50%{opacity:.3}}
+
+    /* Ajuda e input */
+    .helper{color:var(--muted);font-size:.8rem;text-align:center;padding:8px 12px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:#fff}
+    .chat-input{display:flex;gap:12px;padding:14px;border-top:1px solid var(--line);background:var(--panel)}
     .chat-input input{
-      flex:1; border:1px solid var(--line); background:#fff; color:var(--text);
-      border-radius:999px; padding:14px 16px; font-size:15.5px; outline:none;
-      transition:border-color .2s ease, box-shadow .2s ease; box-shadow:0 2px 10px rgba(0,0,0,.04) inset;
+      flex:1;border:1px solid var(--line);background:#fff;color:var(--text);
+      border-radius:999px;padding:14px 16px;font-size:15px;outline:none;transition:border-color .2s ease,box-shadow .2s ease;
     }
-    .chat-input input:focus{ border-color:#cbd5e1; box-shadow:0 0 0 4px rgba(2,6,23,.04) }
+    .chat-input input:focus{border-color:#cbd5e1;box-shadow:0 0 0 4px rgba(2,6,23,.04)}
     .chat-input button{
-      border:0; border-radius:999px; padding:14px 22px; font-weight:800; cursor:pointer;
-      color:var(--btnText); background:var(--btn); letter-spacing:.2px; box-shadow:0 10px 22px rgba(2,6,23,.18);
+      border:0;border-radius:999px;padding:12px 22px;font-weight:800;cursor:pointer;color:var(--btn-text);
+      background:var(--btn); box-shadow:0 4px 14px rgba(2,6,23,.15);
     }
-    .chat-input button:disabled{ opacity:.6; cursor:not-allowed; box-shadow:none }
-    .spinner{ width:18px; height:18px; border:2px solid #cbd5e1; border-top-color:#fff; border-radius:50%; animation:spin 1s linear infinite }
-    @keyframes spin{ to{ transform:rotate(360deg) } }
-    /* Token bar */
-    .token-bar{ display:none; gap:8px; align-items:center; padding:10px 14px; border-top:1px dashed var(--line); background:#fcfcff }
-    .token-bar input{ flex:1; border:1px solid var(--line); border-radius:10px; padding:10px 12px; font-size:14px }
-    .token-bar button{ border:0; background:#111827; color:#fff; padding:10px 14px; border-radius:10px; font-weight:700 }
+    .chat-input button:disabled{opacity:.5;cursor:not-allowed;box-shadow:none}
+
+    /* Painel para token (grande) */
+    .token-panel{display:none; gap:14px; align-items:center; justify-content:space-between; padding:18px; border-top:1px dashed #f59e0b; border-bottom:1px dashed #f59e0b; background:#fff7ed}
+    .token-panel.open{display:flex}
+    .token-panel .msg{font-size:14px;color:#7c2d12}
+    .token-panel a{font-weight:800;color:#b45309;text-decoration:underline}
+    .token-panel .controls{display:flex;gap:10px;flex:1;justify-content:flex-end}
+    .token-panel input{flex:1;border:1px solid #fbbf24;border-radius:12px;padding:12px 14px}
+    .token-panel button{border:0;border-radius:12px;padding:10px 14px;font-weight:700;cursor:pointer}
+    .token-panel .save{background:#0b1220;color:#fff}
+    .token-panel .cancel{background:#fff;color:#0f172a;border:1px solid #e5e7eb}
+
+    /* Markdown simples */
+    .bubble b,strong{font-weight:700}
+    .bubble em,i{font-style:italic}
+    .bubble code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;background:#f8fafc;padding:.1em .4em;border-radius:6px;border:1px solid #e2e8f0}
+    .bubble ul{margin:.3em 0 .3em 1.2em}
   </style>
 </head>
 <body>
-  <div class="chat-wrap">
-    <div class="chat-container">
-      <div class="chat-header">
-        <div class="brand">
-          <img src="https://leicamog.github.io/paginapublica/logosemfundosvg.svg" alt="Conversapp" />
-          <div class="brand-title">
-            <div class="name">Conversapp IA</div>
-            <div class="subtitle">Assistente de Conversa</div>
-          </div>
-        </div>
+
+  <div class="chat-container">
+    <div class="chat-header">
+      <div class="logo">
+        <img src="https://leicamog.github.io/paginapublica/logosemfundosvg.svg" alt="Conversapp" />
       </div>
+      <div class="chat-title">
+        <h1>Conversapp IA</h1>
+        <div class="subtitle">Assistente de Conversa</div>
+      </div>
+    </div>
 
-      <div id="messages" class="chat-messages"></div>
-      <div class="helper">Pressione <strong>Enter</strong> para enviar</div>
+    <div id="messages" class="chat-messages"></div>
 
-      <div id="tokenBar" class="token-bar">
-        <span style="font-size:12.5px;color:var(--muted)">Informe seu token da OpenAI para continuar:</span>
+    <div id="tokenPanel" class="token-panel" role="region" aria-live="polite">
+      <div class="msg">
+        <strong>Para continuar, precisamos do seu token da OpenAI.</strong>
+        Gere sua chave em
+        <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com/api-keys</a>.
+      </div>
+      <div class="controls">
         <input id="tokenInput" type="password" placeholder="sk-..." />
-        <button id="tokenSave">Salvar</button>
+        <button class="save" id="saveToken">Salvar</button>
+        <button class="cancel" id="cancelToken">Cancelar</button>
       </div>
+    </div>
 
-      <div class="chat-input">
-        <input type="text" id="messageInput" placeholder="Digite sua mensagem..." />
-        <button id="sendButton"><span id="sendLabel">Enviar</span></button>
-      </div>
+    <div class="helper">Pressione <strong>Enter</strong> para enviar</div>
+
+    <div class="chat-input">
+      <input type="text" id="messageInput" placeholder="Digite sua mensagem..." />
+      <button id="sendButton"><span id="sendLabel">Enviar</span></button>
     </div>
   </div>
 
   <script>
-    /* ========= Config ========= */
+    /*** ENDPOINTS FIXOS + comutação via ?env=test ***/
     const URL_PARAMS = new URLSearchParams(window.location.search);
     const ENV = (URL_PARAMS.get('env') || URL_PARAMS.get('mode') || '').toLowerCase();
-    const DEFAULT_WEBHOOKS = {
-      test: 'https://ssn8n.conversapp.com.br/webhook-test/conversapp-chat',
-      prod: 'https://swebhooks.conversapp.com.br/webhook/conversapp-chat'
-    };
-    const WEBHOOK_URL = URL_PARAMS.get('webhook') || (ENV === 'test' ? DEFAULT_WEBHOOKS.test : DEFAULT_WEBHOOKS.prod);
+    const BASE = (ENV === 'test')
+      ? 'https://ssn8n.conversapp.com.br/webhook-test'
+      : 'https://swebhooks.conversapp.com.br/webhook';
 
+    const CHAT_WEBHOOK = `${BASE}/conversapp-chat`;
+    const SAVE_TOKEN_WEBHOOK = `${BASE}/conversapp-save-openai-token`;
+
+    /*** Parâmetros do Conversapp ***/
     const USER_DATA = {
-      iddousuario: URL_PARAMS.get('iddousuario'),
-      iddaconta: URL_PARAMS.get('iddaconta'),
-      iddoatendimento: URL_PARAMS.get('iddoatendimento'),
-      iddocontato: URL_PARAMS.get('iddocontato'),
-      iddocard: URL_PARAMS.get('iddocard'),
+      iddousuario:       URL_PARAMS.get('iddousuario'),
+      iddaconta:         URL_PARAMS.get('iddaconta'),
+      iddoatendimento:   URL_PARAMS.get('iddoatendimento'),
+      iddocontato:       URL_PARAMS.get('iddocontato'),
+      iddocard:          URL_PARAMS.get('iddocard'),
       telefonedocontato: URL_PARAMS.get('telefonedocontato'),
-      emaildocontato: URL_PARAMS.get('emaildocontato')
+      emaildocontato:    URL_PARAMS.get('emaildocontato')
     };
 
-    /* ===== Util ===== */
-    const tz = 'America/Sao_Paulo';
-    const fmt = new Intl.DateTimeFormat('pt-BR', { hour:'2-digit', minute:'2-digit', timeZone:tz });
-    const messagesContainer = document.getElementById('messages');
-    const messageInput = document.getElementById('messageInput');
-    const sendButton = document.getElementById('sendButton');
-    const sendLabel  = document.getElementById('sendLabel');
-    const tokenBar   = document.getElementById('tokenBar');
+    /*** UI refs ***/
+    const messagesEl = document.getElementById('messages');
+    const inputEl = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendButton');
+    const sendLabel = document.getElementById('sendLabel');
+    const tokenPanel = document.getElementById('tokenPanel');
     const tokenInput = document.getElementById('tokenInput');
-    const tokenSave  = document.getElementById('tokenSave');
+    const saveTokenBtn = document.getElementById('saveToken');
+    const cancelTokenBtn = document.getElementById('cancelToken');
 
-    function brTime(){ return fmt.format(new Date()); }
+    let lastUserMessage = null;
 
-    // Markdown leve (suas regras: *bold*, _italic_)
-    function escapeHtml(s){ return s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
-    function renderMarkdown(src){
-      let s = escapeHtml(String(src ?? ''));
-      // links [texto](url)
-      s = s.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
-      // código `...`
-      s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
-      // **bold** (opcional)
-      s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-      // *bold* (sua regra)
-      s = s.replace(/\*([^*]+)\*/g, '<strong>$1</strong>');
-      // _itálico_
-      s = s.replace(/_([^_]+)_/g, '<em>$1</em>');
-      // quebras de linha
-      s = s.replace(/\n/g, '<br>');
-      return s;
+    /*** Helpers ***/
+    function nowBR(){
+      const d = new Date();
+      const utc = d.getTime() + (d.getTimezoneOffset()*60000);
+      const brt = new Date(utc - 3*3600000);
+      return brt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
     }
 
-    function makeRow(sender){
-      const row = document.createElement('div');
-      row.className = 'row ' + (sender === 'user' ? 'user' : (sender === 'error' ? 'error' : 'ai'));
+    function md(text){
+      if(!text) return '';
+      let t = String(text);
+      t = t.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>'); // **bold**
+      t = t.replace(/\*(.+?)\*/g,'<strong>$1</strong>');     // *bold*
+      t = t.replace(/_(.+?)_/g,'<em>$1</em>');               // _italic_
+      t = t.replace(/`([^`]+?)`/g,'<code>$1</code>');        // `code`
+      t = t.replace(/(?:^|\n)- (.+)/g, (m,p1,off)=> (off===0?'<ul><li>'+p1+'</li></ul>':'\n<ul><li>'+p1+'</li></ul>'));
+      return t;
+    }
 
-      const avatar = document.createElement('div');
-      avatar.className = 'avatar ' + (sender === 'user' ? 'user' : 'ai');
-      avatar.innerHTML = sender === 'user'
-        ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M7 20h10M6 20a6 6 0 0 1 12 0M8 7.5c0 2.2 1.8 4 4 4s4-1.8 4-4S14.2 3.5 12 3.5 8 5.3 8 7.5Z" stroke-width="1.6"/></svg>`
-        : `<img src="https://leicamog.github.io/paginapublica/logosemfundosvg.svg" alt="IA">`;
-
-      const bubble = document.createElement('div');
-      bubble.className = 'bubble';
-
-      if(sender !== 'user' && sender !== 'error'){
-        const badge = document.createElement('div');
-        badge.className = 'ai-badge';
-        badge.innerHTML = `<img src="https://leicamog.github.io/paginapublica/logosemfundosvg.svg" alt="Conversapp">`;
-        bubble.appendChild(badge);
+    function addRow(text, sender, isHtml=false){
+      const row = document.createElement('div'); row.className='row ' + (sender==='user'?'user':(sender==='error'?'error':'ai'));
+      const avatar = document.createElement('div'); avatar.className='avatar ' + (sender==='user'?'user':'ai');
+      if(sender==='user'){
+        avatar.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="#0f172a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3v18M3 7h18M7 7l-3 6a4 4 0 0 0 8 0L9 7m8 0l-3 6a4 4 0 0 0 8 0l-3-6"/>
+        </svg>`;
+      } else {
+        avatar.innerHTML = `<img src="https://leicamog.github.io/paginapublica/logosemfundosvg.svg" alt="IA" />`;
       }
-      if(sender === 'user'){
-        const scale = document.createElement('div');
-        scale.className = 'user-scale';
-        scale.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 3v4m-7 3 4 8 4-8m-8 0h8m6-3-4 8-4-8m8 0h-8m4 11V7" stroke-width="1.6"/></svg>`;
-        bubble.appendChild(scale);
-      }
+      const bubble = document.createElement('div'); bubble.className='bubble';
+      bubble.innerHTML = isHtml ? text : md(text);
+      const time = document.createElement('div'); time.className='time'; time.textContent = nowBR();
 
-      if(sender !== 'user') row.appendChild(avatar);
+      if(sender!=='user') row.appendChild(avatar);
       row.appendChild(bubble);
-      if(sender === 'user') row.appendChild(avatar);
-      return { row, bubble };
-    }
+      row.appendChild(time);
+      if(sender==='user') row.appendChild(avatar);
 
-    function addMessage(text, sender){
-      const { row, bubble } = makeRow(sender);
-      bubble.innerHTML = renderMarkdown(text);
-      const t = document.createElement('div');
-      t.className = 'time'; t.textContent = brTime();
-      bubble.appendChild(t);
-      messagesContainer.appendChild(row);
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      messagesEl.appendChild(row);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+      return row;
     }
 
     function addTyping(){
-      const { row, bubble } = makeRow('ai');
-      row.classList.add('typing-row');              // <- evita sobreposição do selo
-      const dots = document.createElement('div');
-      dots.className = 'typing-dots';
-      dots.innerHTML = '<span class="dot"></span><span class="dot"></span><span class="dot"></span>';
-      bubble.appendChild(dots);
-      const t = document.createElement('div');
-      t.className = 'time'; t.textContent = brTime();
-      bubble.appendChild(t);
-      messagesContainer.appendChild(row);
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
-      return () => row.remove();
+      const row = document.createElement('div'); row.className='row typing ai';
+      const avatar = document.createElement('div'); avatar.className='avatar ai';
+      avatar.innerHTML = `<img src="https://leicamog.github.io/paginapublica/logosemfundosvg.svg" alt="IA" />`;
+      const bubble = document.createElement('div'); bubble.className='bubble';
+      bubble.innerHTML = `<span class="typing"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>`;
+      const time = document.createElement('div'); time.className='time'; time.textContent = nowBR();
+      row.appendChild(avatar); row.appendChild(bubble); row.appendChild(time);
+      messagesEl.appendChild(row);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+      return ()=>row.remove();
     }
 
-    function setSending(isSending){
-      if(isSending){
-        messageInput.disabled = true; sendButton.disabled = true;
-        sendLabel.innerHTML = '<span class="spinner" aria-hidden="true"></span>';
-      }else{
-        messageInput.disabled = false; sendButton.disabled = false;
-        sendLabel.textContent = 'Enviar'; messageInput.focus();
+    function setSending(v){
+      if(v){ inputEl.disabled=true; sendBtn.disabled=true; sendLabel.textContent='…'; }
+      else { inputEl.disabled=false; sendBtn.disabled=false; sendLabel.textContent='Enviar'; inputEl.focus(); }
+    }
+
+    function showTokenPanel(){ tokenPanel.classList.add('open'); tokenInput.focus(); }
+    function hideTokenPanel(){ tokenPanel.classList.remove('open'); }
+
+    /*** Network ***/
+    async function callChat(messageText){
+      const params = new URLSearchParams({ ...USER_DATA, userMessage: messageText });
+      const res = await fetch(`${CHAT_WEBHOOK}?${params}`, { method:'POST', headers:{'Content-Type':'application/json'} });
+      let data=null, raw=''; try{ data = await res.json(); } catch { raw = await res.text(); }
+      return { ok:res.ok, data, raw };
+    }
+
+    async function saveToken(){
+      const key = (tokenInput.value || '').trim();
+      if(!key) return;
+      const res = await fetch(SAVE_TOKEN_WEBHOOK, {
+        method:'POST', headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify({ account_id: USER_DATA.iddaconta, openai_token: key })
+      });
+      if(res.ok){
+        hideTokenPanel();
+        addRow('Token salvo. Você já pode enviar sua mensagem. 😉','ai');
+        if(lastUserMessage){
+          const { ok, data } = await callChat(lastUserMessage);
+          if(ok && data && data.status==='success') addRow(data.response,'ai',true);
+        }
+      } else {
+        addRow('Não consegui salvar seu token. Tente novamente.','error');
       }
     }
 
-    function showTokenBar(accountId){
-      tokenBar.style.display = 'flex';
-      tokenSave.onclick = async () => {
-        const token = (tokenInput.value || '').trim();
-        if(!token) return;
-        try{
-          const params = new URLSearchParams({ ...USER_DATA, action:'save_token', account_id: accountId || USER_DATA.iddaconta });
-          await fetch(`${WEBHOOK_URL}?${params}`, {
-            method:'POST',
-            headers:{ 'Content-Type':'application/json' },
-            body: JSON.stringify({ token })
-          });
-          tokenBar.style.display = 'none';
-          addMessage('Token salvo. Você já pode enviar sua mensagem. 😉', 'ai');
-        }catch{ addMessage('Não foi possível salvar o token. Tente novamente.', 'error'); }
-      };
-    }
-
+    /*** Fluxo ***/
     async function sendMessage(){
-      const messageText = (messageInput.value || '').trim();
+      const messageText = (inputEl.value || '').trim();
       if(!messageText) return;
+      lastUserMessage = messageText;
 
       setSending(true);
-      addMessage(messageText, 'user');
-      messageInput.value = '';
+      addRow(messageText,'user');
+      inputEl.value='';
       const stopTyping = addTyping();
 
       try{
-        const params = new URLSearchParams({ ...USER_DATA, userMessage: messageText });
-        const res = await fetch(`${WEBHOOK_URL}?${params}`, { method:'POST', headers:{ 'Content-Type':'application/json' } });
-
-        let data=null, raw='';
-        try{ data = await res.json(); }catch{ raw = await res.text(); }
-
+        const { ok, data, raw } = await callChat(messageText);
         stopTyping();
-
-        if(res.ok && data){
-          if(data.status === 'success'){
-            addMessage(data.response || 'Mensagem recebida.', 'ai');
-          }else if(data.status === 'need_token'){
-            addMessage('Para continuar, precisamos do seu token da OpenAI.', 'error');
-            showTokenBar(data.account_id);
-          }else{
-            addMessage(data.message || data.error || 'Ocorreu um erro.', 'error');
+        if(ok && data){
+          if(data.status==='success'){
+            addRow(data.response,'ai',true);
+          } else if(data.status==='need_token'){
+            showTokenPanel();
+          } else {
+            addRow(data.message || data.error || 'Ocorreu um erro.','error');
           }
-        }else{
-          addMessage(raw || 'Ocorreu um erro.', 'error');
+        } else {
+          addRow(raw || 'Não foi possível conectar ao assistente.','error');
         }
-      }catch(e){
+      } catch (e){
         stopTyping();
-        addMessage('Não foi possível conectar ao assistente.', 'error');
-      }finally{
+        addRow('Não foi possível conectar ao assistente.','error');
+      } finally{
         setSending(false);
       }
     }
 
-    // Eventos
-    sendButton.addEventListener('click', sendMessage);
-    messageInput.addEventListener('keydown', e=>{
+    /*** Eventos ***/
+    saveTokenBtn.addEventListener('click', saveToken);
+    cancelTokenBtn.addEventListener('click', hideTokenPanel);
+    sendBtn.addEventListener('click', sendMessage);
+    inputEl.addEventListener('keydown', e => {
       if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendMessage(); }
     });
 
-    // Mensagem inicial
-    addMessage('Olá! Posso ajudar analisando seu contexto. Envie sua pergunta quando quiser.', 'ai');
+    /*** Mensagem inicial ***/
+    addRow('Olá! Posso ajudar analisando seu contexto. Envie sua pergunta quando quiser.','ai');
   </script>
 </body>
 </html>
