@@ -10,6 +10,7 @@
       --bubble-ai:#fff; --bubble-user:#f2f4f7; --err:#ffe4e6; --err-text:#9f1239;
       --radius:18px; --shadow:0 20px 40px rgba(15,23,42,.08);
       --btn:#0b1220; --btn-text:#fff; --brand:#101828;
+      --warn-bg:#fff7ed; --warn-border:#f59e0b; --warn-text:#7c2d12;
     }
     *{box-sizing:border-box} html,body{height:100%}
     body{
@@ -83,9 +84,9 @@
     .chat-input button:disabled{opacity:.5;cursor:not-allowed;box-shadow:none}
 
     /* Painel para token (grande) */
-    .token-panel{display:none; gap:14px; align-items:center; justify-content:space-between; padding:18px; border-top:1px dashed #f59e0b; border-bottom:1px dashed #f59e0b; background:#fff7ed}
+    .token-panel{display:none; gap:14px; align-items:center; justify-content:space-between; padding:18px; border-top:1px dashed var(--warn-border); border-bottom:1px dashed var(--warn-border); background:var(--warn-bg)}
     .token-panel.open{display:flex}
-    .token-panel .msg{font-size:14px;color:#7c2d12}
+    .token-panel .msg{font-size:14px;color:var(--warn-text)}
     .token-panel a{font-weight:800;color:#b45309;text-decoration:underline}
     .token-panel .controls{display:flex;gap:10px;flex:1;justify-content:flex-end}
     .token-panel input{flex:1;border:1px solid #fbbf24;border-radius:12px;padding:12px 14px}
@@ -137,7 +138,7 @@
   </div>
 
   <script>
-    /*** ENDPOINTS FIXOS + comutação via ?env=test ***/
+    /*** ENDPOINTS (produção por padrão, use ?env=test p/ sandbox) ***/
     const URL_PARAMS = new URLSearchParams(window.location.search);
     const ENV = (URL_PARAMS.get('env') || URL_PARAMS.get('mode') || '').toLowerCase();
     const BASE = (ENV === 'test')
@@ -147,7 +148,7 @@
     const CHAT_WEBHOOK = `${BASE}/conversapp-chat`;
     const SAVE_TOKEN_WEBHOOK = `${BASE}/conversapp-save-openai-token`;
 
-    /*** Parâmetros do Conversapp ***/
+    /*** Contexto vindo do Conversapp ***/
     const USER_DATA = {
       iddousuario:       URL_PARAMS.get('iddousuario'),
       iddaconta:         URL_PARAMS.get('iddaconta'),
@@ -169,8 +170,9 @@
     const cancelTokenBtn = document.getElementById('cancelToken');
 
     let lastUserMessage = null;
+    let hasValidToken = false;
 
-    /*** Helpers ***/
+    /* --- Helpers --- */
     function nowBR(){
       const d = new Date();
       const utc = d.getTime() + (d.getTimezoneOffset()*60000);
@@ -185,7 +187,6 @@
       t = t.replace(/\*(.+?)\*/g,'<strong>$1</strong>');     // *bold*
       t = t.replace(/_(.+?)_/g,'<em>$1</em>');               // _italic_
       t = t.replace(/`([^`]+?)`/g,'<code>$1</code>');        // `code`
-      t = t.replace(/(?:^|\n)- (.+)/g, (m,p1,off)=> (off===0?'<ul><li>'+p1+'</li></ul>':'\n<ul><li>'+p1+'</li></ul>'));
       return t;
     }
 
@@ -194,7 +195,7 @@
       const avatar = document.createElement('div'); avatar.className='avatar ' + (sender==='user'?'user':'ai');
       if(sender==='user'){
         avatar.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="#0f172a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 3v18M3 7h18M7 7l-3 6a4 4 0 0 0 8 0L9 7m8 0l-3 6a4 4 0 0 0 8 0l-3-6"/>
+          <path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-4 0-7 2-7 4v2h14v-2c0-2-3-4-7-4Z"/>
         </svg>`;
       } else {
         avatar.innerHTML = `<img src="https://leicamog.github.io/paginapublica/logosemfundosvg.svg" alt="IA" />`;
@@ -228,13 +229,13 @@
 
     function setSending(v){
       if(v){ inputEl.disabled=true; sendBtn.disabled=true; sendLabel.textContent='…'; }
-      else { inputEl.disabled=false; sendBtn.disabled=false; sendLabel.textContent='Enviar'; inputEl.focus(); }
+      else { inputEl.disabled=!hasValidToken; sendBtn.disabled=!hasValidToken; sendLabel.textContent='Enviar'; if(hasValidToken) inputEl.focus(); }
     }
 
-    function showTokenPanel(){ tokenPanel.classList.add('open'); tokenInput.focus(); }
+    function showTokenPanel(){ tokenPanel.classList.add('open'); inputEl.disabled = true; sendBtn.disabled = true; tokenInput.focus(); }
     function hideTokenPanel(){ tokenPanel.classList.remove('open'); }
 
-    /*** Network ***/
+    /* --- Network helpers --- */
     async function callChat(messageText){
       const params = new URLSearchParams({ ...USER_DATA, userMessage: messageText });
       const res = await fetch(`${CHAT_WEBHOOK}?${params}`, { method:'POST', headers:{'Content-Type':'application/json'} });
@@ -242,30 +243,81 @@
       return { ok:res.ok, data, raw };
     }
 
+    async function checkTokenOnLoad(){
+      // Bloqueia input até validar
+      hasValidToken = false;
+      inputEl.disabled = true; sendBtn.disabled = true;
+
+      const { ok, data } = await callChat('__handshake__');
+      if(ok && data){
+        if(data.status === 'need_token'){
+          showTokenPanel();
+          addRow('Para continuar, precisamos do seu token da OpenAI.','error');
+          return;
+        }
+        if(data.status === 'success' || data.ok === true){
+          hasValidToken = true;
+          hideTokenPanel();
+          inputEl.disabled = false; sendBtn.disabled = false;
+          return;
+        }
+      }
+      // Se algo der errado, pelo menos mostra o painel
+      showTokenPanel();
+    }
+
     async function saveToken(){
       const key = (tokenInput.value || '').trim();
-      if(!key) return;
-      const res = await fetch(SAVE_TOKEN_WEBHOOK, {
-        method:'POST', headers:{ 'Content-Type':'application/json' },
-        body: JSON.stringify({ account_id: USER_DATA.iddaconta, openai_token: key })
+      if(!key){ tokenInput.focus(); return; }
+
+      // Envia em QUERY + BODY para compatibilidade com o n8n (pega $json.query e/ou $json.body):
+      const q = new URLSearchParams({ iddaconta: USER_DATA.iddaconta, iddousuario: USER_DATA.iddousuario });
+      const res = await fetch(`${SAVE_TOKEN_WEBHOOK}?${q}`, {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify({
+          account_id: USER_DATA.iddaconta,
+          user_id: USER_DATA.iddousuario,
+          openai_token: key
+        })
       });
-      if(res.ok){
+
+      let data=null, raw=''; try{ data = await res.json(); } catch { raw = await res.text(); }
+
+      // Aceita múltiplos formatos de sucesso
+      const success = res.ok && (
+        (data && (data.ok === true || data.status === 'success')) || raw === 'ok'
+      );
+
+      if(success){
+        hasValidToken = true;
         hideTokenPanel();
+        inputEl.disabled = false; sendBtn.disabled = false;
         addRow('Token salvo. Você já pode enviar sua mensagem. 😉','ai');
+
+        // Se usuário já tinha digitado algo antes do bloqueio, dispara agora
         if(lastUserMessage){
-          const { ok, data } = await callChat(lastUserMessage);
-          if(ok && data && data.status==='success') addRow(data.response,'ai',true);
+          const { ok, data:data2, raw:raw2 } = await callChat(lastUserMessage);
+          if(ok && data2 && data2.status==='success') addRow(data2.response,'ai',true);
+          else if(!ok) addRow(raw2 || 'Não foi possível conectar ao assistente.','error');
+          lastUserMessage = null;
         }
       } else {
         addRow('Não consegui salvar seu token. Tente novamente.','error');
       }
     }
 
-    /*** Fluxo ***/
+    /* --- Fluxo de envio --- */
     async function sendMessage(){
       const messageText = (inputEl.value || '').trim();
       if(!messageText) return;
-      lastUserMessage = messageText;
+
+      // Se não tem token válido, abre painel e guarda a mensagem para disparar pós-salvar
+      if(!hasValidToken){
+        lastUserMessage = messageText;
+        showTokenPanel();
+        return;
+      }
 
       setSending(true);
       addRow(messageText,'user');
@@ -279,7 +331,10 @@
           if(data.status==='success'){
             addRow(data.response,'ai',true);
           } else if(data.status==='need_token'){
+            hasValidToken = false;
             showTokenPanel();
+            addRow('Para continuar, precisamos do seu token da OpenAI.','error');
+            lastUserMessage = messageText; // para reenviar depois
           } else {
             addRow(data.message || data.error || 'Ocorreu um erro.','error');
           }
@@ -294,16 +349,17 @@
       }
     }
 
-    /*** Eventos ***/
+    /* --- Eventos --- */
     saveTokenBtn.addEventListener('click', saveToken);
-    cancelTokenBtn.addEventListener('click', hideTokenPanel);
+    cancelTokenBtn.addEventListener('click', ()=> tokenInput.value = '');
     sendBtn.addEventListener('click', sendMessage);
     inputEl.addEventListener('keydown', e => {
       if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendMessage(); }
     });
 
-    /*** Mensagem inicial ***/
+    /* --- Boot --- */
     addRow('Olá! Posso ajudar analisando seu contexto. Envie sua pergunta quando quiser.','ai');
+    checkTokenOnLoad(); // valida imediatamente ao abrir
   </script>
 </body>
 </html>
