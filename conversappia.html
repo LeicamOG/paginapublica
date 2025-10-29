@@ -3,228 +3,247 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Chat IA Conversapp</title>
+  <title>Conversapp IA</title>
   <style>
     :root{
-      --bg:#f6f7f9; --panel:#ffffff; --text:#0f172a; --muted:#64748b; --line:#e5e7eb;
-      --bubble-ai:#ffffff; --bubble-user:#f3f5f7; --err:#e11d48; --ok:#16a34a;
-      --radius:20px; --shadow:0 28px 60px rgba(15,23,42,.10); --shadow-sm:0 6px 20px rgba(15,23,42,.06);
-      --focus: rgba(2,6,23,.06);
+      --bg:#f7f7f8;
+      --panel:#ffffff;
+      --text:#0f172a;
+      --muted:#6b7280;
+      --line:#e5e7eb;
+      --bubble-ai:#ffffff;
+      --bubble-user:#f2f4f7;
+      --ok:#16a34a;
+      --err:#e11d48;
+      --radius:16px;
+      --shadow:0 12px 36px rgba(15,23,42,.08);
     }
+
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
       margin:0; background:var(--bg); color:var(--text);
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Inter, Roboto, Helvetica, Arial;
-      display:flex; align-items:center; justify-content:center; padding:24px;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, Helvetica, Arial;
+      display:flex; align-items:center; justify-content:center; padding:20px;
     }
 
-    .chat-wrap{ width:min(100%, 1240px); }
+    /* Container maior e mais confortável */
     .chat-container{
-      width:100%; height:min(94vh, 920px); background:var(--panel);
-      border:1px solid var(--line); border-radius:28px; box-shadow:var(--shadow);
-      display:grid; grid-template-rows:auto auto 1fr auto; overflow:hidden; position:relative;
+      width:min(100%, 680px);
+      height:min(92vh, 820px);
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:24px;
+      box-shadow:var(--shadow);
+      display:grid;
+      grid-template-rows:auto 1fr auto auto;
+      overflow:hidden;
+      margin:0 auto;
+      position:relative;
     }
 
-    .chat-header{ padding:22px 28px 14px; text-align:center; font-weight:900; font-size:1.35rem; letter-spacing:.2px;
-      color:var(--text); border-bottom:1px solid var(--line); background:#fff; }
-    .chat-subtitle{font-weight:600; font-size:1rem; color:var(--muted); margin-top:8px}
-
-    .banner{ display:none; align-items:center; justify-content:space-between; gap:16px;
-      padding:14px 18px; background:#fff1f2; color:#881337; border-top:1px solid #fecdd3; border-bottom:1px solid #fecdd3; }
-    .banner strong{display:block; margin-bottom:4px}
-    .banner-actions{display:flex; gap:10px; flex-wrap:wrap}
-    .btn{
-      border:1px solid var(--line); background:#f8fafc; color:#0f172a; padding:12px 16px; border-radius:999px; font-weight:800; cursor:pointer;
-      box-shadow:var(--shadow-sm);
+    /* Header com logo à esquerda + duas linhas de título */
+    .chat-header{
+      display:flex; align-items:center; gap:12px;
+      background:var(--panel);
+      padding:14px 18px;
+      color:var(--text);
+      border-bottom:1px solid var(--line);
     }
-    .btn.primary{ background:#0f172a; color:#fff; border-color:#0f172a }
-    .btn:disabled{ opacity:.6; cursor:not-allowed; box-shadow:none }
+    .brand{
+      display:flex; align-items:center; gap:12px;
+    }
+    .brand img{
+      width:28px; height:28px; display:block;
+    }
+    .titles{
+      line-height:1.1;
+    }
+    .titles .main{
+      font-weight:800; letter-spacing:.2px; font-size:1.02rem;
+    }
+    .titles .sub{
+      font-weight:600; font-size:.82rem; color:var(--muted); margin-top:2px;
+    }
 
-    .chat-messages{ padding:26px; overflow:auto; display:flex; flex-direction:column; gap:18px; background:#fff }
-    .chat-messages::-webkit-scrollbar{width:12px}
+    .chat-messages{
+      flex:1; padding:20px; overflow:auto; display:flex; flex-direction:column; gap:14px;
+      scroll-behavior:smooth; background:#fff;
+    }
+    .chat-messages::-webkit-scrollbar{width:10px}
+    .chat-messages::-webkit-scrollbar-track{background:transparent}
     .chat-messages::-webkit-scrollbar-thumb{background:#d1d5db; border-radius:99px}
 
-    .row{display:flex; gap:14px; align-items:flex-end; width:100%}
+    .row{display:flex; gap:12px; align-items:flex-end; width:100%}
     .row.user{justify-content:flex-end}
-    .row.error .bubble{background:#fff1f2; border-color:#fecdd3; color:#991b1b}
 
-    .avatar, .avatar img{flex:0 0 64px; width:64px; height:64px; border-radius:50%; display:block}
-    .avatar{background:#eef2f7; border:1px solid var(--line)}
-    .avatar.ai{background:#fff; display:flex; align-items:center; justify-content:center}
-    .avatar.ai img{width:44px; height:44px}
+    /* Avatares maiores; IA com logo maior dentro */
+    .avatar, .avatar img{
+      flex:0 0 40px; width:40px; height:40px; border-radius:50%; display:block
+    }
+    .avatar{background:#e5e7eb; border:1px solid var(--line)}
+    .avatar.user{background:#e5e7eb}
+    .avatar.ai{
+      background:#fff; border:1px solid var(--line);
+      display:flex; align-items:center; justify-content:center
+    }
+    .avatar.ai img{width:28px; height:28px} /* aumentei a proporção do logo no balão da IA */
 
     .bubble{
-      max-width:78%; padding:18px 20px; border-radius:20px; line-height:1.6; font-size:1.05rem;
-      border:1px solid var(--line); box-shadow:0 4px 16px rgba(0,0,0,.06);
-      transform:translateY(10px); opacity:0; animation:pop .18s ease-out forwards;
-      word-wrap:break-word; white-space:pre-wrap;
+      max-width:76%;
+      padding:12px 14px 18px; /* espaço para timestamp */
+      border-radius:16px; line-height:1.55; font-size:.98rem;
+      border:1px solid var(--line); box-shadow:0 2px 10px rgba(0,0,0,.05);
+      transform:translateY(6px); opacity:0; animation:pop .2s ease-out forwards;
+      position:relative;
     }
     .row.ai .bubble{background:var(--bubble-ai)}
     .row.user .bubble{background:var(--bubble-user)}
+    .row.error .bubble{background:#fff1f2; border-color:#fecdd3; color:#991b1b}
+
+    /* Timestamp no canto inferior da bolha */
+    .time{
+      position:absolute; right:10px; bottom:6px;
+      font-size:.75rem; color:#9ca3af;
+      user-select:none;
+    }
+
+    /* Selo de balança no balão do usuário */
+    .bubble .scale{
+      position:absolute; top:8px; right:10px;
+      width:18px; height:18px; opacity:.35;
+    }
+
     @keyframes pop{to{transform:none; opacity:1}}
 
-    .typing{display:inline-flex; gap:8px}
-    .dot{width:8px; height:8px; border-radius:999px; background:#cbd5e1; opacity:.9; animation:blink 1.2s infinite}
-    .dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
+    .typing{display:inline-flex; gap:6px}
+    .dot{width:6px; height:6px; border-radius:999px; background:#cbd5e1; opacity:.9; animation:blink 1.2s infinite}
+    .dot:nth-child(2){animation-delay:.2s}
+    .dot:nth-child(3){animation-delay:.4s}
     @keyframes blink{50%{opacity:.3}}
 
-    .helper{color:var(--muted); font-size:.95rem; text-align:center; padding:12px 16px; border-top:1px solid var(--line); border-bottom:1px solid var(--line); background:#fff }
-
-    .chat-input{ display:flex; gap:12px; padding:16px; border-top:1px solid var(--line); background:var(--panel); }
+    .chat-input{
+      display:flex; gap:10px; padding:12px; border-top:1px solid var(--line); background:var(--panel);
+    }
     .chat-input input{
-      flex:1; border:1px solid var(--line); background:#fff; color:#0b1220;
-      border-radius:999px; padding:16px 18px; font-size:18px; outline:none;
+      flex:1; border:1px solid var(--line); background:#fff; color:var(--text);
+      border-radius:999px; padding:12px 14px; font-size:16px; outline:none;
       transition:border-color .2s ease, box-shadow .2s ease;
     }
-    .chat-input input:focus{border-color:#cbd5e1; box-shadow:0 0 0 6px var(--focus)}
-    .btn-send{
-      border:0; border-radius:999px; padding:16px 22px; font-weight:900; cursor:pointer; font-size:16px;
-      color:#111827; background:#f3f4f6; border:1px solid var(--line); box-shadow:0 2px 12px rgba(0,0,0,.06);
+    .chat-input input:focus{border-color:#cbd5e1; box-shadow:0 0 0 4px rgba(2,6,23,.04)}
+
+    .chat-input button{
+      border:0; border-radius:999px; padding:12px 18px; font-weight:800; cursor:pointer;
+      color:#111827; background:#f3f4f6; border:1px solid var(--line);
+      box-shadow:0 2px 8px rgba(0,0,0,.04);
+      display:flex; align-items:center; gap:8px;
     }
-    .btn-send:disabled{opacity:.6; cursor:not-allowed; box-shadow:none}
-    .spinner{width:20px; height:20px; border:2px solid #cbd5e1; border-top-color:#111827; border-radius:50%; animation:spin 1s linear infinite}
+    .chat-input button:disabled{opacity:.6; cursor:not-allowed; box-shadow:none}
+    .spinner{width:16px; height:16px; border:2px solid #cbd5e1; border-top-color:#111827; border-radius:50%; animation:spin 1s linear infinite}
     @keyframes spin{to{transform:rotate(360deg)}}
 
-    /* ===== Modal de Token ===== */
-    .modal-backdrop{ display:none; position:fixed; inset:0; background:rgba(2,6,23,.45); backdrop-filter:blur(2px); align-items:center; justify-content:center; z-index:50; }
-    .modal{ width:min(96vw,560px); background:#fff; border:1px solid var(--line); border-radius:20px; box-shadow:var(--shadow); padding:22px; }
-    .modal h3{ margin:0 0 8px; font-size:1.25rem }
-    .modal p{ margin:0 0 16px; color:var(--muted) }
-    .field{ display:grid; gap:8px; margin-bottom:14px }
-    .field input{
-      width:100%; padding:14px 16px; font-size:16px; border:1px solid #d1d5db; border-radius:12px; outline:none;
-      transition:border-color .2s ease, box-shadow .2s ease;
+    .helper{
+      color:var(--muted); font-size:.85rem; text-align:center; padding:10px 14px;
+      border-top:1px solid var(--line); border-bottom:1px solid var(--line); background:#fff
     }
-    .field input:focus{ border-color:#0f172a; box-shadow:0 0 0 4px var(--focus) }
-    .row-actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:8px }
-    .note{ font-size:.85rem; color:var(--muted) }
-    .success{ color:var(--ok); font-weight:700 }
-    .error{ color:var(--err); font-weight:700 }
   </style>
 </head>
 <body>
-  <div class="chat-wrap">
-    <div class="chat-container" role="dialog" aria-label="Assistente de Conversa">
-      <div class="chat-header">
-        Assistente de Conversa
-        <div class="chat-subtitle">Converse com a IA do Conversapp</div>
-      </div>
 
-      <!-- Banner de token ausente -->
-      <div id="tokenBanner" class="banner" role="alert">
-        <div>
-          <strong>Token da OpenAI não encontrado.</strong>
-          Para usar a IA, cadastre sua chave de API (sk-...) nas Configurações.
+  <div class="chat-container">
+    <div class="chat-header">
+      <div class="brand">
+        <!-- Logo Conversapp à esquerda -->
+        <img src="https://leicamog.github.io/paginapublica/logosemfundosvg.svg" alt="Conversapp" referrerpolicy="no-referrer" decoding="async">
+        <div class="titles">
+          <div class="main">Conversapp IA</div>
+          <div class="sub">Assistente de Conversa</div>
         </div>
-        <div class="banner-actions">
-          <button id="openTokenModalBtn" class="btn">Cadastrar token agora</button>
-          <a class="btn" href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer">Onde encontro?</a>
-          <button id="retryBtn" class="btn primary">Já cadastrei — tentar novamente</button>
-        </div>
-      </div>
-
-      <div id="messages" class="chat-messages" aria-live="polite"></div>
-      <div class="helper">Pressione <strong>Enter</strong> para enviar</div>
-
-      <div class="chat-input">
-        <input type="text" id="messageInput" placeholder="Digite sua pergunta..." autocomplete="off" />
-        <button id="sendButton" class="btn-send"><span id="sendLabel">Enviar</span></button>
       </div>
     </div>
-  </div>
 
-  <!-- Modal do Token -->
-  <div id="tokenModalBackdrop" class="modal-backdrop" aria-hidden="true">
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="tk_title">
-      <h3 id="tk_title">Cadastrar token da OpenAI</h3>
-      <p>Informe sua chave que inicia com <code>sk-</code>. Ela será enviada ao nosso webhook para ser salva com segurança.</p>
+    <div id="messages" class="chat-messages"></div>
+    <div class="helper">Pressione <strong>Enter</strong> para enviar</div>
 
-      <div class="field">
-        <label for="tk_input">Chave de API (sk-...)</label>
-        <input type="password" id="tk_input" placeholder="sk-..." />
-      </div>
-      <div class="note">Vincularemos este token à sua conta atual para uso em futuras conversas.</div>
-
-      <div id="tk_feedback" class="note" aria-live="polite"></div>
-
-      <div class="row-actions">
-        <button id="tk_cancel" class="btn">Cancelar</button>
-        <button id="tk_save" class="btn primary">Salvar token</button>
-      </div>
+    <div class="chat-input">
+      <input type="text" id="messageInput" placeholder="Digite sua mensagem..." />
+      <button id="sendButton"><span id="sendLabel">Enviar</span></button>
     </div>
   </div>
 
   <script>
-    // ===== ENDPOINTS =====
+    // --- CONFIGURAÇÃO DE ENDPOINT ---
     const URL_PARAMS = new URLSearchParams(window.location.search);
     const ENV = (URL_PARAMS.get('env') || URL_PARAMS.get('mode') || '').toLowerCase();
+    const DEFAULT_WEBHOOKS = {
+      test: 'https://ssn8n.conversapp.com.br/webhook-test/conversapp-chat',
+      prod: 'https://swebhooks.conversapp.com.br/webhook/conversapp-chat'
+    };
+    const WEBHOOK_URL = URL_PARAMS.get('webhook') || (ENV === 'test' ? DEFAULT_WEBHOOKS.test : DEFAULT_WEBHOOKS.prod);
 
-    const DEFAULTS = {
-      chat: {
-        test: 'https://ssn8n.conversapp.com.br/webhook-test/conversapp-chat',
-        prod: 'https://swebhooks.conversapp.com.br/webhook/conversapp-chat'
-      },
-      token: {
-        test: 'https://ssn8n.conversapp.com.br/webhook-test/conversapp-chat-token',
-        prod: 'https://swebhooks.conversapp.com.br/webhook/conversapp-chat-token'
-      }
+    // Dados vindos do Conversapp via querystring
+    const USER_DATA = {
+      iddousuario:      URL_PARAMS.get('iddousuario'),
+      iddaconta:        URL_PARAMS.get('iddaconta'),
+      iddoatendimento:  URL_PARAMS.get('iddoatendimento'),
+      iddocontato:      URL_PARAMS.get('iddocontato'),
+      iddocard:         URL_PARAMS.get('iddocard'),
+      telefonedocontato:URL_PARAMS.get('telefonedocontato'),
+      emaildocontato:   URL_PARAMS.get('emaildocontato')
     };
 
-    const WEBHOOK_CHAT  = URL_PARAMS.get('webhook')      || (ENV === 'test' ? DEFAULTS.chat.test  : DEFAULTS.chat.prod);
-    const WEBHOOK_TOKEN = URL_PARAMS.get('token_webhook')|| (ENV === 'test' ? DEFAULTS.token.test : DEFAULTS.token.prod);
-
-    // ===== METADADOS DA CONVERSA =====
-    const META_KEYS = [
-      'iddousuario','iddaconta','iddoatendimento','iddocontato','iddocard','telefonedocontato','emaildocontato'
-    ];
-
-    // Ler query e mesclar com cache local (garante persistência nos próximos envios)
-    function loadMeta(){
-      const fromLocal = JSON.parse(localStorage.getItem('conversappChatMeta') || '{}');
-      const fromQS = {};
-      META_KEYS.forEach(k => { const v = URL_PARAMS.get(k); if (v) fromQS[k] = v; });
-      const merged = { ...fromLocal, ...fromQS };
-      localStorage.setItem('conversappChatMeta', JSON.stringify(merged));
-      return merged;
+    // Validação mínima
+    if (!USER_DATA.iddaconta || !USER_DATA.iddoatendimento) {
+      const href = window.location.href;
+      document.body.innerHTML = `
+        <div class="chat-container" style="justify-content:center;align-items:center;text-align:center;padding:20px">
+          <div class="brand" style="justify-content:center;margin-bottom:12px">
+            <img src="https://leicamog.github.io/paginapublica/logosemfundosvg.svg" width="28" height="28" alt="Conversapp">
+            <div class="titles">
+              <div class="main">Conversapp IA</div>
+              <div class="sub">Assistente de Conversa</div>
+            </div>
+          </div>
+          <h2 style="margin:8px 0 0">Erro de configuração</h2>
+          <p>A janela foi aberta, mas faltam informações da conversa na URL.</p>
+          <h3>URL Recebida:</h3>
+          <p style="word-break:break-all;background:#f8fafc;padding:10px;border:1px solid #e5e7eb;border-radius:8px;font-size:.9em">${href}</p>
+          <h3>Dados encontrados:</h3>
+          <ul style="text-align:left;display:inline-block;line-height:1.6">
+            ${Object.entries(USER_DATA).map(([k,v]) => `<li><b>${k}:</b> ${v || '(não encontrado)'}</li>`).join('')}
+          </ul>
+          <p><b>Ação necessária:</b> verifique a configuração do botão no Conversapp. A URL deve ser algo como:<br>
+          <code>.../chat.html?iddousuario=...&iddaconta=...&iddoatendimento=...&iddocontato=...</code></p>
+        </div>`;
+      throw new Error('Parâmetros da URL ausentes.');
     }
 
-    function buildQuery(meta){
-      const qp = new URLSearchParams();
-      META_KEYS.forEach(k => { if (meta[k]) qp.set(k, meta[k]); });
-      return qp.toString();
+    // --------- Utilidades ----------
+    const tz = 'America/Sao_Paulo';
+    function brTimeString(date = new Date()){
+      try{
+        return new Intl.DateTimeFormat('pt-BR', {
+          timeZone: tz, hour: '2-digit', minute: '2-digit'
+        }).format(date);
+      }catch{
+        // fallback se Intl der problema
+        const d = new Date(date);
+        const hh = String(d.getHours()).padStart(2,'0');
+        const mm = String(d.getMinutes()).padStart(2,'0');
+        return `${hh}:${mm}`;
+      }
     }
 
-    function enrichBody(body, meta){
-      return {
-        ...(body || {}),
-        metadata: { ...meta },
-        // redundante por segurança: também no root do body
-        ...meta
-      };
-    }
-
-    let USER_META = loadMeta();
-
-    // ===== ELEMENTOS =====
     const messagesContainer = document.getElementById('messages');
-    const messageInput      = document.getElementById('messageInput');
-    const sendButton        = document.getElementById('sendButton');
-    const sendLabel         = document.getElementById('sendLabel');
-    const tokenBanner       = document.getElementById('tokenBanner');
-    const retryBtn          = document.getElementById('retryBtn');
-    const tokenModalBackdrop= document.getElementById('tokenModalBackdrop');
-    const tkInput           = document.getElementById('tk_input');
-    const tkSave            = document.getElementById('tk_save');
-    const tkCancel          = document.getElementById('tk_cancel');
-    const tkFeedback        = document.getElementById('tk_feedback');
-    const openTokenModalBtn = document.getElementById('openTokenModalBtn');
+    const messageInput = document.getElementById('messageInput');
+    const sendButton = document.getElementById('sendButton');
+    const sendLabel = document.getElementById('sendLabel');
 
-    // ===== UI helpers =====
     function rowEl(sender){
       const row = document.createElement('div');
       row.className = 'row ' + (sender === 'user' ? 'user' : (sender === 'error' ? 'error' : 'ai'));
 
+      // avatar
       let avatar;
       if(sender === 'user'){
         avatar = document.createElement('div');
@@ -234,7 +253,9 @@
         avatar.className = 'avatar ai';
         const img = document.createElement('img');
         img.src = 'https://leicamog.github.io/paginapublica/logosemfundosvg.svg';
-        img.alt = 'Conversapp'; img.referrerPolicy = 'no-referrer'; img.decoding = 'async';
+        img.alt = 'Conversapp';
+        img.referrerPolicy = 'no-referrer';
+        img.decoding = 'async';
         avatar.appendChild(img);
       }
 
@@ -247,9 +268,33 @@
       return { row, bubble };
     }
 
-    function addMessage(text, sender='ai'){
+    // Inline SVG da balança (para o balão do usuário)
+    const SCALE_SVG = `
+      <svg class="scale" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M12 3a1 1 0 0 1 1 1v1h2a1 1 0 1 1 0 2h-2v2.126l4.553 2.276a1 1 0 0 1 .447 1.342C17.4 14.94 15.873 17 13 17c-2.873 0-4.4-2.06-4-4.256a1 1 0 0 1 .447-1.342L14 9.126V7h-4v2.126l-4.553 2.276a1 1 0 0 0-.447 1.342C5.6 14.94 7.127 17 10 17s4.4-2.06 4-4.256a1 1 0 0 0-.447-1.342L9 9.126V7H7a1 1 0 0 1 0-2h2V4a1 1 0 0 1 1-1h2z"/>
+      </svg>`;
+
+    function addMessage(text, sender){
       const { row, bubble } = rowEl(sender);
-      bubble.textContent = text;
+
+      // conteúdo
+      const p = document.createElement('div');
+      p.textContent = text;
+      bubble.appendChild(p);
+
+      // balança no balão do usuário
+      if(sender === 'user'){
+        const scaleWrap = document.createElement('div');
+        scaleWrap.innerHTML = SCALE_SVG;
+        bubble.appendChild(scaleWrap.firstElementChild);
+      }
+
+      // timestamp (horário Brasília)
+      const t = document.createElement('div');
+      t.className = 'time';
+      t.textContent = brTimeString(new Date());
+      bubble.appendChild(t);
+
       messagesContainer.appendChild(row);
       messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
@@ -260,6 +305,13 @@
       dots.className = 'typing';
       dots.innerHTML = '<span class="dot"></span><span class="dot"></span><span class="dot"></span>';
       bubble.appendChild(dots);
+
+      // timestamp enquanto digitando
+      const t = document.createElement('div');
+      t.className = 'time';
+      t.textContent = brTimeString(new Date());
+      bubble.appendChild(t);
+
       messagesContainer.appendChild(row);
       messagesContainer.scrollTop = messagesContainer.scrollHeight;
       return () => row.remove();
@@ -267,133 +319,68 @@
 
     function setSending(isSending){
       if(isSending){
-        messageInput.disabled = true; sendButton.disabled = true;
+        messageInput.disabled = true;
+        sendButton.disabled = true;
         sendLabel.innerHTML = '<span class="spinner" aria-hidden="true"></span>';
       }else{
-        messageInput.disabled = false; sendButton.disabled = false;
+        messageInput.disabled = false;
+        sendButton.disabled = false;
         sendLabel.textContent = 'Enviar';
         messageInput.focus();
       }
     }
 
-    function showTokenBanner(show=true){
-      tokenBanner.style.display = show ? 'flex' : 'none';
-      // Quando falta token, bloqueia inputs para evitar “loop” de erros
-      messageInput.disabled = show; sendButton.disabled = show;
-    }
-
-    function openTokenModal(){
-      tkInput.value = '';
-      tkFeedback.textContent = '';
-      tkFeedback.className = 'note';
-      tokenModalBackdrop.style.display = 'flex';
-      tkInput.focus();
-    }
-    function closeTokenModal(){
-      tokenModalBackdrop.style.display = 'none';
-    }
-
-    // ===== Requisições =====
-    async function callWebhook(url, body){
-      // Sempre recarrega meta do cache (garante IDs nas próximas mensagens)
-      USER_META = loadMeta();
-      const query = buildQuery(USER_META);
-      const res = await fetch(`${url}?${query}`, {
-        method:'POST',
-        headers:{ 'Content-Type':'application/json' },
-        body: JSON.stringify(enrichBody(body, USER_META))
-      });
-      let data = null, txt = '';
-      try { data = await res.json(); } catch { txt = await res.text(); }
-      return { ok: res.ok, data, txt };
-    }
-
-    // ===== Chat =====
-    let isRequestRunning = false;
-
-    async function sendTextMessage(){
+    async function sendMessage(){
       const messageText = (messageInput.value || '').trim();
-      if(!messageText || isRequestRunning) return;
+      if(!messageText) return;
 
-      isRequestRunning = true;
       setSending(true);
       addMessage(messageText, 'user');
       messageInput.value = '';
       const stopTyping = addTyping();
 
       try{
-        const { ok, data, txt } = await callWebhook(WEBHOOK_CHAT, { userMessage: messageText });
+        // Sempre reenviar os parâmetros do usuário (alguns ambientes perdem parte da query na navegação)
+        const params = new URLSearchParams({
+          ...USER_DATA,
+          userMessage: messageText
+        });
+
+        const res = await fetch(`${WEBHOOK_URL}?${params}`, {
+          method:'POST',
+          headers:{ 'Content-Type':'application/json' }
+        });
+
+        let data = null; let text = '';
+        try{ data = await res.json(); } catch{ text = await res.text(); }
 
         stopTyping();
 
-        const missingToken =
-          (data && (data.code === 'MISSING_OPENAI_TOKEN' ||
-                    /token da openai|openai token/i.test(data.message||''))) ? true : false;
-
-        if(missingToken){
-          addMessage(data.message || 'Token da OpenAI não encontrado.', 'error');
-          showTokenBanner(true);
-          return;
-        }
-
-        if(ok && data && data.status === 'success'){
+        if(res.ok && data && data.status === 'success'){
           addMessage(data.response || 'Mensagem recebida.', 'ai');
-        }else{
-          addMessage((data && (data.message || data.error)) || txt || 'Ocorreu um erro.', 'error');
+        } else if (res.ok && data && data.status === 'need_token') {
+          addMessage('Seu token da OpenAI não está cadastrado. Por favor, adicione-o para continuar.', 'error');
+        } else {
+          const msg = (data && (data.message || data.error)) || text || 'Ocorreu um erro.';
+          addMessage(msg, 'error');
         }
       }catch(err){
+        stopTyping();
         console.error('Erro ao chamar o webhook:', err);
         addMessage('Não foi possível conectar ao assistente.', 'error');
       }finally{
         setSending(false);
-        isRequestRunning = false;
       }
     }
 
-    // ===== Token =====
-    async function saveToken(){
-      const token = tkInput.value.trim();
-      if(!token || !token.startsWith('sk-')){
-        tkFeedback.textContent = 'Informe uma chave válida iniciando com sk-';
-        tkFeedback.className = 'note error';
-        tkInput.focus();
-        return;
-      }
-      tkSave.disabled = true; tkCancel.disabled = true; tkFeedback.textContent = 'Enviando...'; tkFeedback.className = 'note';
+    // Eventos
+    document.getElementById('sendButton').addEventListener('click', sendMessage);
+    document.getElementById('messageInput').addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendMessage(); }
+    });
 
-      try{
-        const { ok, data, txt } = await callWebhook(WEBHOOK_TOKEN, { openai_token: token });
-
-        if(ok && data && (data.status === 'success' || data.saved === true)){
-          tkFeedback.textContent = 'Token salvo com sucesso! Você já pode usar a IA.';
-          tkFeedback.className = 'note success';
-          // Oculta banner e fecha modal após um pequeno delay
-          setTimeout(()=>{ closeTokenModal(); showTokenBanner(false); }, 800);
-        }else{
-          tkFeedback.textContent = (data && (data.message || data.error)) || txt || 'Não foi possível salvar o token.';
-          tkFeedback.className = 'note error';
-        }
-      }catch(err){
-        console.error('Erro ao salvar token:', err);
-        tkFeedback.textContent = 'Falha de rede ao enviar o token.';
-        tkFeedback.className = 'note error';
-      }finally{
-        tkSave.disabled = false; tkCancel.disabled = false;
-      }
-    }
-
-    // ===== Eventos =====
-    document.getElementById('sendButton').addEventListener('click', sendTextMessage);
-    messageInput.addEventListener('keydown', (e)=>{ if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendTextMessage(); }});
-
-    retryBtn.addEventListener('click', () => { showTokenBanner(false); });
-    openTokenModalBtn.addEventListener('click', openTokenModal);
-    tkCancel.addEventListener('click', closeTokenModal);
-    tkSave.addEventListener('click', saveToken);
-    tokenModalBackdrop.addEventListener('click', (e)=>{ if(e.target === tokenModalBackdrop) closeTokenModal(); });
-
-    // ===== Mensagem inicial =====
-    addMessage('Olá! Analisei esta conversa. Como posso te ajudar?', 'ai');
+    // Mensagem inicial
+    addMessage('Olá! Posso ajudar analisando seu contexto. Envie sua pergunta quando quiser.', 'ai');
   </script>
 </body>
 </html>
